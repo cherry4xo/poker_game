@@ -1,0 +1,237 @@
+{
+    "$schema": "https://www.krakend.io/schema/v3.json",
+    "version": 3,
+    "name": "KrakenD API GW",
+    "port": 8080,
+    "host": ["http://0.0.0.0:8080"],
+    "timeout": "3000ms",
+    "cache_ttl": "300s",
+    "endpoints": [
+        {
+            "@comment": "Get user me",
+            "endpoint": "/me",
+            "method": "GET",
+            "input_headers": [
+                "*"
+            ],
+            "backend": [
+                {
+                    "host": ["http://users:8083"],
+                    "url_pattern": "/users/me/home",
+                    "method": "GET"
+                }
+            ],
+            "extra_config": {
+                "auth/signer": {
+                    "alg": "HS256",
+                    "jwk_url": "http://auth:8083/login/symmetric.json",
+                    "keys_to_sign": ["access_token", "refresh_token"],
+                    "kid": "sim2",
+                    "disable_jwk_security": true
+                }
+            }
+        },
+        {
+            "@comment": "Change password",
+            "endpoint": "/me/change_password",
+            "method": "POST",
+            "input_headers": [
+                "*"
+            ],
+            "input_query_strings": [
+                "current_password",
+                "new_password"
+            ],
+            "backend": [
+                {
+                    "host": ["http://users:8083"],
+                    "url_pattern": "/users/me/change_password",
+                    "method": "POST"
+                }
+            ],
+            "extra_config": {
+                "auth/signer": {
+                    "alg": "HS256",
+                    "jwk_url": "http://auth:8083/login/symmetric.json",
+                    "keys_to_sign": ["access_token", "refresh_token"],
+                    "kid": "sim2",
+                    "disable_jwk_security": true
+                },
+                "proxy": {
+                    "sequential": true
+                }
+            }
+        },
+        {
+            "@comment": "Send email confirm code",
+            "endpoint": "/me/send_confirm_code",
+            "method": "GET",
+            "input_headers": [
+                "*"
+            ],
+            "backend": [
+                {
+                    "host": ["http://users:8083"],
+                    "url_pattern": "/users/me/send_confirm_code",
+                    "method": "GET"
+                }
+            ],
+            "extra_config": {
+                "auth/signer": {
+                    "alg": "HS256",
+                    "jwk_url": "http://auth:8083/login/symmetric.json",
+                    "keys_to_sign": ["access_token", "refresh_token"],
+                    "kid": "sim2",
+                    "disable_jwk_security": true
+                },
+                "proxy": {
+                    "sequential": true
+                }
+            }
+        },
+        {
+            "@comment": "Confirm email code",
+            "endpoint": "/me/confirm_email",
+            "method": "POST",
+            "input_headers": [
+                "*"
+            ],
+            "input_query_strings": [
+                "*"
+            ],
+            "backend": [
+                {
+                    "host": ["http://users:8083"],
+                    "url_pattern": "/users/me/confirm_email",
+                    "method": "POST"
+                }
+            ],
+            "extra_config": {
+                "auth/signer": {
+                    "alg": "HS256",
+                    "jwk_url": "http://auth:8083/login/symmetric.json",
+                    "keys_to_sign": ["access_token", "refresh_token"],
+                    "kid": "sim2",
+                    "disable_jwk_security": true
+                },
+                "proxy": {
+                    "sequential": true
+                }
+            }
+        },
+        {
+            "@comment": "Send password reset letter",
+            "endpoint": "/password_reset/send",
+            "method": "POST",
+            "input_headers": [
+                "*"
+            ],
+            "input_query_strings": [
+                "*"
+            ],
+            "backend": [
+                {
+                    "host": ["http://users:8083"],
+                    "url_pattern": "/users/password_reset/send",
+                    "method": "POST"
+                }
+            ]
+        },
+        {
+            "@comment": "Password reset email code confirm",
+            "endpoint": "/password_reset/confirm",
+            "method": "POST",
+            "input_headers": [
+                "*"
+            ],
+            "input_query_strings": [
+                "*"
+            ],
+            "backend": [
+                {
+                    "host": ["http://users:8083"],
+                    "url_pattern": "/users/password_reset/confirm",
+                    "method": "POST"
+                }
+            ]
+        },
+        {
+            "@comment": "Set new password after reset",
+            "endpoint": "/password_reset/set_new",
+            "method": "POST",
+            "input_headers": [
+                "*"
+            ],
+            "input_query_strings": [
+                "*"
+            ],
+            "backend": [
+                {
+                    "host": ["http://users:8083"],
+                    "url_pattern": "/users/password_reset/set_new",
+                    "method": "POST"
+                }
+            ]
+        },
+        {
+            "@comment": "Send change email code",
+            "endpoint": "/me/change_email/send",
+            "method": "POST",
+            "input_headers": [
+                "*"
+            ],
+            "input_query_strings": [
+                "*"
+            ],
+            "backend": [
+                {
+                    "host": ["http://users:8083"],
+                    "url_pattern": "/users/me/change_email/send",
+                    "method": "POST"
+                }
+            ],
+            "extra_config": {
+                "auth/signer": {
+                    "alg": "HS256",
+                    "jwk_url": "http://auth:8083/login/symmetric.json",
+                    "keys_to_sign": ["access_token", "refresh_token"],
+                    "kid": "sim2",
+                    "disable_jwk_security": true
+                },
+                "proxy": {
+                    "sequential": true
+                }
+            }
+        },
+        {
+            "@comment": "Confirm new email with code",
+            "endpoint": "/me/change_email/confirm",
+            "method": "POST",
+            "input_headers": [
+                "*"
+            ],
+            "input_query_strings": [
+                "*"
+            ],
+            "backend": [
+                {
+                    "host": ["http://users:8083"],
+                    "url_pattern": "/users/me/change_email/confirm",
+                    "method": "POST"
+                }
+            ],
+            "extra_config": {
+                "auth/signer": {
+                    "alg": "HS256",
+                    "jwk_url": "http://auth:8083/login/symmetric.json",
+                    "keys_to_sign": ["access_token", "refresh_token"],
+                    "kid": "sim2",
+                    "disable_jwk_security": true
+                },
+                "proxy": {
+                    "sequential": true
+                }
+            }
+        }
+    ]
+}
