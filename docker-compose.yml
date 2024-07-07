@@ -1,0 +1,60 @@
+version: 3.9
+name: "poker"
+
+services:
+  auth:
+    build: ./services/auth
+    restart: unless-stopped
+    ports:
+      - "8082:8083"
+    links:
+      - redis
+      - users-postgres
+  users:
+    build: ./services/users
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    links:
+      - redis
+      - users-postgres
+      - auth
+    command: python3 -u -m uvicorn main:app --host 0.0.0.0 --port 8083
+  users-postgres:
+    image: postgres:alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: 256128
+      POSTGRES_USER: postgres
+      POSTGRES_DB: users
+    ports:
+      - "5433:5432"
+    expose:
+      - 5432
+    volumes:
+      - "users-postgres:/data/db"
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    expose:
+     - 6379
+    volumes:
+      - "redis:/data/cache"
+  krakend_ce:
+    image: devopsfaith/krakend:watch
+    volumes:
+      - ./services/krakend/config:/etc/krakend
+    ports:
+      - "1234:1234"
+      - "8080:8080"
+      - "8090:8090"
+    command: ["run", "-d", "-c", "/etc/krakend/krakend.json"]
+    links:
+      - users
+      - auth
+    depends_on:
+      - users
+      - auth
+    environment:
+      - CLIENT_SECRET=UFEubVvILIcqQwDusHfbMIBGEAVdIgou
+      - CLIENT_ID=HFLHNhgBmeDRDQFvRRjmxWSTNzNLWCQO

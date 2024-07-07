@@ -1,0 +1,16 @@
+aiokafka
+aerich
+fastapi
+PyJWT
+uvicorn
+redis
+redis[hiredis]   
+pytest
+tortoise-orm
+tortoise-orm[asyncpg]
+python-dotenv
+passlib
+python-multipart
+email-validator
+bcrypt
+cryptography
