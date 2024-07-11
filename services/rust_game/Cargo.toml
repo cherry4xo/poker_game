@@ -1,0 +1,13 @@
+[package]
+name = "rust_game"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.28.1", features = ["full"] }
+tokio-tungstenite = "0.18.0"
+bstr = "1.4.0"
+futures-util = "0.3"
+regex = "1"
+parking_lot = "0.12.1"
+rand = "0.8.5"
