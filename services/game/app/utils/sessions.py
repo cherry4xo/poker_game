@@ -11,13 +11,25 @@ from app import settings
 
 class Player:
     def __init__(self, websocket: WebSocket, uuid: UUID4, name: str, balance: float = None) -> None:
-        self.id = uuid4
+        self.id = uuid4()
         self.name = name
         self.balance = balance or settings.DEFAULT_START_BALANCE
         self.hand = []
         self.currentbet = 0
         self.handscore = 0
         self.websocket = websocket
+
+    def __dict__(self) -> dict:
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "balance": self.balance,
+            "hand": self.hand,
+            "currentbet": self.currentbet,
+            "handscore": self.handscore,
+            "websocket": self.websocket
+        }
+        return data
 
 
 class AbstractSessionFactory(object):
@@ -26,20 +38,13 @@ class AbstractSessionFactory(object):
 
 
 class Session:
-    # def __init__(self, max_players: int = None, user_id_list: list[UUID4] = None) -> None:
-    #     session_id = str(uuid4())
-    #     user_id_list = user_id_list or []
-    #     max_players = max_players or settings.DEFAULT_MAX_PLAYERS
-    #     # self.id: UUID4 = uuid4()
-    #     # self.players_id_list: List[UUID4] = user_id_list
-    #     data = {
-    #         "id": session_id,
-    #         "max_players": max_players,
-    #         "players_id_list": user_id_list
-    #     }
+    def __init__(self, uuid: UUID4, max_players: int = None, user_id_list: list[Player] = None) -> None:
+        user_id_list = user_id_list or []
+        max_players = max_players or settings.DEFAULT_MAX_PLAYERS
+        self.id: UUID4 = uuid
+        self.max_players = max_players
+        self.players_id_list: List[Player] = user_id_list
 
-    #     async with r.pipeline(transaction=True) as pipe:
-    #         pipe.set(f"session:{session_id}", data)
     @classmethod
     async def get_data_by_uuid(cls, session_id: UUID4) -> dict:
         async with r.pipeline(transaction=True) as pipe:
@@ -53,26 +58,29 @@ class Session:
             await (pipe.set(f"session:{session_id}", data_json).execute())
 
     @classmethod
-    async def create(cls, max_players: int = None, user_id_list: list[UUID4] = None) -> dict:
+    async def create(cls, max_players: int = None, user_list: list[Player] = None) -> "Session":
         session_id = str(uuid4())
-        user_id_list = user_id_list or []
+        session = cls(uuid=session_id, max_players=max_players, user_id_list=user_list)
+        user_list = user_list or []
+        if user_list != []:
+            user_list = [user.__dict__() for user in user_list]
         max_players = max_players or settings.DEFAULT_MAX_PLAYERS
         # self.id: UUID4 = uuid4()
         # self.players_id_list: List[UUID4] = user_id_list
         data = {
             "id": session_id,
             "max_players": max_players,
-            "players_id_list": user_id_list
+            "players_id_list": user_list
         }
         data_json = json.dumps(data)
         await cls.set_data(session_id, data_json)
-        return data_json
+        return session
 
     @classmethod
-    async def add_player(cls, user_id: UUID4, session_id: UUID4) -> bool:
+    async def add_player(cls, user: Player, session_id: UUID4) -> bool:
         data = await cls.get_data_by_uuid(session_id)
         if len(data["players_id_list"]) < data["max_players"]:
-            data["players_id_list"].append(str(user_id))
+            data["players_id_list"].append(user.__dict__())
             data_json = json.dumps(data)
             await cls.set_data(session_id, data_json)
             return True
@@ -81,11 +89,12 @@ class Session:
     @classmethod
     async def remove_player(cls, user_id: UUID4, session_id: UUID4) -> bool:
         data = await cls.get_data_by_uuid(session_id)
-        if str(user_id) in data["players_id_list"]:
-            data["players_id_list"].remove(user_id)
-            data_json = json.dumps(data)
-            await cls.set_data(session_id, data_json)
-            return True
+        for user in data["players_id_list"]:
+            if user["id"] == user_id:
+                data["players_id_list"].remove(user)
+                data_json = json.dumps(data)
+                await cls.set_data(session_id, data_json)
+                return True
         return False
 
 
@@ -126,8 +135,8 @@ class SessionsContainer:
 
 
 class SessionFactory(AbstractSessionFactory):
-    def create_session(self, max_players: int = None):
-        return Session(max_players)
+    async def create_session(self, max_players: int = None):
+        return await Session.create(max_players)
     
 
 def create_factory() -> SessionFactory:
