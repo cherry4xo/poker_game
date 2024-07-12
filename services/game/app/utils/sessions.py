@@ -61,9 +61,7 @@ class Session:
     async def create(cls, max_players: int = None, user_list: list[Player] = None) -> "Session":
         session_id = str(uuid4())
         session = cls(uuid=session_id, max_players=max_players, user_id_list=user_list)
-        user_list = user_list or []
-        if user_list != []:
-            user_list = [user.__dict__() for user in user_list]
+        user_list: list[Player] = user_list or []
         max_players = max_players or settings.DEFAULT_MAX_PLAYERS
         # self.id: UUID4 = uuid4()
         # self.players_id_list: List[UUID4] = user_id_list
@@ -75,12 +73,31 @@ class Session:
         data_json = json.dumps(data)
         await cls.set_data(session_id, data_json)
         return session
+    
+    def add_player(self, user: Player) -> bool:
+        if len(self.players_id_list) < self.max_players:
+            self.players_id_list.append(user)
+            return True
+        return False
+
+    def remove_player(self, user_id: UUID4) -> bool:
+        for player in self.players_id_list:
+            if player.id == user_id:
+                self.players_id_list.remove(player)
+                return True
+        return False
+    
+    # TODO complete method 
+    # NOTE maybe make some support methods
+    @classmethod
+    async def get_by_uuid(cls, session_id: UUID4) -> "Session":
+        data = await cls.get_data_by_uuid(session_id)
 
     @classmethod
     async def add_player(cls, user: Player, session_id: UUID4) -> bool:
         data = await cls.get_data_by_uuid(session_id)
         if len(data["players_id_list"]) < data["max_players"]:
-            data["players_id_list"].append(user.__dict__())
+            data["players_id_list"].append(user)
             data_json = json.dumps(data)
             await cls.set_data(session_id, data_json)
             return True
@@ -90,12 +107,18 @@ class Session:
     async def remove_player(cls, user_id: UUID4, session_id: UUID4) -> bool:
         data = await cls.get_data_by_uuid(session_id)
         for user in data["players_id_list"]:
-            if user["id"] == user_id:
+            if user == user_id:
                 data["players_id_list"].remove(user)
                 data_json = json.dumps(data)
                 await cls.set_data(session_id, data_json)
                 return True
         return False
+    
+
+async def test():
+    session = await Session.create(4)
+    session.players_id_list[0]
+
 
 
 class SessionsContainer:
