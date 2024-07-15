@@ -38,12 +38,17 @@ class AbstractSessionFactory(object):
 
 
 class Session:
-    def __init__(self, uuid: UUID4, max_players: int = None, user_id_list: list[Player] = None) -> None:
+    def __init__(self, 
+                 uuid: UUID4, 
+                 max_players: int = None, 
+                 user_id_list: list[Player] = None, 
+                 data: dict = None) -> None:
         user_id_list = user_id_list or []
         max_players = max_players or settings.DEFAULT_MAX_PLAYERS
         self.id: UUID4 = uuid
         self.max_players = max_players
         self.players_id_list: List[Player] = user_id_list
+        self.data: dict = {} or data
 
     @classmethod
     async def get_data_by_uuid(cls, session_id: UUID4) -> dict:
@@ -73,25 +78,6 @@ class Session:
         data_json = json.dumps(data)
         await cls.set_data(session_id, data_json)
         return session
-    
-    def add_player(self, user: Player) -> bool:
-        if len(self.players_id_list) < self.max_players:
-            self.players_id_list.append(user)
-            return True
-        return False
-
-    def remove_player(self, user_id: UUID4) -> bool:
-        for player in self.players_id_list:
-            if player.id == user_id:
-                self.players_id_list.remove(player)
-                return True
-        return False
-    
-    # TODO complete method 
-    # NOTE maybe make some support methods
-    @classmethod
-    async def get_by_uuid(cls, session_id: UUID4) -> "Session":
-        data = await cls.get_data_by_uuid(session_id)
 
     @classmethod
     async def add_player(cls, user: Player, session_id: UUID4) -> bool:
@@ -114,11 +100,18 @@ class Session:
                 return True
         return False
     
+    def add_player(self, user: Player) -> bool:
+        if len(self.players_id_list) < self.max_players:
+            self.players_id_list.append(user)
+            return True
+        return False
 
-async def test():
-    session = await Session.create(4)
-    session.players_id_list[0]
-
+    def remove_player(self, user_id: UUID4) -> bool:
+        for player in self.players_id_list:
+            if player.id == user_id:
+                self.players_id_list.remove(player)
+                return True
+        return False
 
 
 class SessionsContainer:
@@ -126,9 +119,15 @@ class SessionsContainer:
         self.sessions: List[Session] = []
         self.factory: SessionFactory = create_factory()
 
+    def find_session_by_uuid(self, session_id: UUID4) -> Optional[Session]:
+        for session in self.sessions:
+            if session.data["id"] == str(session_id):
+                return session
+        return None
+
     def create_session(self, max_players: int = None) -> Session:
         session = self.factory.create_session(max_players)
-        self.sessions.append()
+        self.sessions.append(session)
         return session
 
     def remove_session_by_uuid(self, uuid: UUID4) -> bool:
@@ -140,13 +139,14 @@ class SessionsContainer:
     
     def find_user_session(self, uuid: UUID4) -> Optional[Session]:
         for session in self.sessions:
-            if uuid in session.players_id_list:
-                return session
+            for player in session.players_id_list:
+                if player.id == uuid:
+                    return session
         return None
     
     def get_session_by_uuid(self, uuid: UUID4) -> Optional[Session]:
         for session in self.sessions:
-            if uuid in session.id:
+            if uuid == session.id:
                 return session
         return None
     
