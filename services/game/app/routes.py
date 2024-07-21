@@ -21,3 +21,5 @@ async def create_session():
 @router.websocket("/game/{uuid}")
 async def websocket_endpoint(user_id: UUID4, websocket: WebSocket):
     await websocket.accept()
+    session = await sessions_container.find_user_session(uuid=user_id)
+
