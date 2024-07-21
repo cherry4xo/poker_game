@@ -73,7 +73,7 @@ class Session:
         data = {
             "id": session_id,
             "max_players": max_players,
-            "players_id_list": user_list
+            "players_id_list": [user.__dict__() for user in user_list]
         }
         data_json = json.dumps(data)
         await cls.set_data(session_id, data_json)
@@ -83,7 +83,7 @@ class Session:
     async def add_player(cls, user: Player, session_id: UUID4) -> bool:
         data = await cls.get_data_by_uuid(session_id)
         if len(data["players_id_list"]) < data["max_players"]:
-            data["players_id_list"].append(user)
+            data["players_id_list"].append(user.__dict__())
             data_json = json.dumps(data)
             await cls.set_data(session_id, data_json)
             return True
@@ -93,12 +93,21 @@ class Session:
     async def remove_player(cls, user_id: UUID4, session_id: UUID4) -> bool:
         data = await cls.get_data_by_uuid(session_id)
         for user in data["players_id_list"]:
-            if user == user_id:
+            if user["id"] == user_id:
                 data["players_id_list"].remove(user)
                 data_json = json.dumps(data)
                 await cls.set_data(session_id, data_json)
                 return True
         return False
+    
+    async def save(self) -> None:
+        data = {
+            "id": self.id,
+            "max_players": self.max_players,
+            "players_id_list": [user.__dict__() for user in self.players_id_list]
+        }
+        data_json = json.dumps(data)
+        await self.set_data(session_id=self.id, data_json=data_json)
     
     def add_player(self, user: Player) -> bool:
         if len(self.players_id_list) < self.max_players:
