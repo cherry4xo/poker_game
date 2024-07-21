@@ -14,3 +14,8 @@ class BaseProperties(BaseModel):
 class SessionCreateOut(BaseModel):
     uuid: UUID4
     players_id_list: List[UUID4] = []
+
+
+class JWTTokenPayload(BaseModel):
+    user_uuid: UUID4 = None
+    token_kind: str = None
