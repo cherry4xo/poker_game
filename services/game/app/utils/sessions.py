@@ -1,6 +1,7 @@
 import json
 from typing import List, Optional
-from uuid import uuid4
+from enum import Enum
+from uuid import uuid4, UUID
 
 from fastapi import WebSocket
 from pydantic import UUID4
@@ -11,7 +12,7 @@ from app import settings
 
 class Player:
     def __init__(self, uuid: UUID4, name: str, balance: float = None) -> None:
-        self.id = uuid4()
+        self.id = uuid
         self.name = name
         self.balance = balance or settings.DEFAULT_START_BALANCE
         self.hand = []
@@ -45,18 +46,70 @@ class AbstractSessionFactory(object):
         raise NotImplementedError()
 
 
+class SessionStatus(Enum):
+    LOBBY = 1
+    GAME = 2
+    PAUSED = 3
+
+
+# number of checks in game
+class SessionStage(Enum):
+    NULL = 0
+    FIRST = 1
+    SECOND = 2
+    THIRD = 3
+    FOURTH = 4
+
+
 class Session:
-    def __init__(self, 
-                 uuid: UUID4, 
-                 max_players: int = None, 
-                 user_id_list: list[Player] = None, 
-                 data: dict = None) -> None:
-        user_id_list = user_id_list or []
-        max_players = max_players or settings.DEFAULT_MAX_PLAYERS
-        self.id: UUID4 = uuid
-        self.max_players = max_players
-        self.players_id_list: List[Player] = user_id_list
-        self.data: dict = {} or data
+    def __init__(
+        self,
+        uuid: Optional[UUID4] = None,
+        max_players: Optional[int] = None,
+        small_blind: Optional[float] = None,
+        big_blind: Optional[float] = None,
+        players: List[Player] = [],
+        seats: List[Optional[UUID4]] = [],
+        status: Optional[SessionStatus] = SessionStatus.LOBBY,
+        stage: Optional[SessionStage] = SessionStage.NULL,
+        current_player: Optional[int] = None,
+        dealer: Optional[int] = None,
+        current_bet: Optional[float] = None,
+        total_bet: Optional[float] = None,
+        data: Optional[dict] = None
+    ) -> None:
+        if seats == []:
+            seats = [None for _ in range(max_players)]
+        self.id: UUID4 = uuid or uuid4()
+        self.seats: List[Optional[UUID4]] = seats
+        self.small_blind: float = small_blind
+        self.big_blind: float = big_blind
+        self.status: SessionStatus = status
+        self.max_players: int = max_players or settings.DEFAULT_MAX_PLAYERS
+        self.players: List[Player] = players
+        self.stage: SessionStage = stage
+        self.current_player: Optional[int] = current_player
+        self.dealer: Optional[int] = dealer
+        self.current_bet: Optional[float] = current_bet
+        self.total_bet: Optional[float] = total_bet
+        seats_dict = [str(seat) for seat in self.seats]
+        if data is None:
+            self.data = {
+                "id": str(self.id),
+                "status": self.status.name,
+                "seats": seats_dict,
+                "small_blind": self.small_blind,
+                "big_blind": self.big_blind,
+                "max_players": self.max_players,
+                "players": [player.__dict__() for player in self.players],
+                "stage": self.stage.name,
+                "current_player": self.current_player,
+                "dealer": self.dealer,
+                "current_bet": self.current_bet,
+                "total_bet": self.total_bet
+            }
+        else:
+            self.data = data
 
     @classmethod
     async def get_data_by_uuid(cls, session_id: UUID4) -> dict:
@@ -89,9 +142,19 @@ class Session:
         if data == {}:
             return None
         players = [Player.create(data=user_data) for user_data in data["players_id_list"]]
-        session = Session(uuid=data["id"], 
+        seats = [UUID(uuid) for uuid in data["seats"]]
+        session = Session(uuid=data["id"],
                           max_players=data["max_players"],
-                          user_id_list=players,
+                          small_blind=data["small_blind"],
+                          big_blind=data["big_blind"],
+                          players=players,
+                          seats=seats,
+                          status=SessionStatus[f"{data['status']}"],
+                          stage=SessionStage[f"{data['stage']}"],
+                          current_player=data["current_player"],
+                          dealer=data["dealer"],
+                          current_bet=data["current_bet"],
+                          total_bet=data["total_bet"],
                           data=data)
         return session
     
@@ -107,50 +170,61 @@ class Session:
             await (pipe.set(f"session:{session_id}", data_json).execute())
 
     @classmethod
-    async def create(cls, max_players: int = None, user_list: list[Player] = None) -> "Session":
-        """create new Session object
-
-        Args:
-            max_players (int, optional): max players in Session. Defaults to None.
-            user_list (list[Player], optional): Session objects players if exist. Defaults to None.
-
-        Returns:
-            Session: created Session object
-        """        
-        session_id = str(uuid4())
-        session = cls(uuid=session_id, max_players=max_players, user_id_list=user_list)
-        user_list: list[Player] = user_list or []
-        max_players = max_players or settings.DEFAULT_MAX_PLAYERS
-        # self.id: UUID4 = uuid4()
-        # self.players_id_list: List[UUID4] = user_id_list
-        data = {
-            "id": session_id,
-            "max_players": max_players,
-            "players_id_list": [user.__dict__() for user in user_list]
-        }
-        data_json = json.dumps(data)
-        await cls.set_data(session_id, data_json)
+    async def create(
+        cls,
+        uuid: Optional[UUID4] = None,
+        max_players: Optional[int] = None,
+        small_blind: Optional[float] = None,
+        big_blind: Optional[float] = None,
+        players: List[Player] = [],
+        seats: List[Optional[UUID4]] = [],
+        status: Optional[SessionStatus] = SessionStatus.LOBBY,
+        stage: Optional[SessionStage] = SessionStage.NULL,
+        current_player: Optional[int] = None,
+        dealer: Optional[int] = None,
+        current_bet: Optional[float] = None,
+        total_bet: Optional[float] = None,
+        data: Optional[dict] = None
+    ):
+        session = cls(
+            uuid=uuid,
+            max_players=max_players,
+            small_blind=small_blind,
+            big_blind=big_blind,
+            players=players,
+            seats=seats,
+            status=status,
+            stage=stage,
+            current_player=current_player,
+            dealer=dealer,
+            current_bet=current_bet,
+            total_bet=total_bet,
+            data=data,
+        )
+        data_json = json.dumps(session.data)
+        await cls.set_data(session_id=session.id, data_json=data_json)
         return session
-
+    
     @classmethod
-    async def add_player(cls, user: Player, session_id: UUID4) -> bool:
+    async def add_player(cls, player: Player, session_id: UUID4) -> bool:
         """add player into players_id_list of Session object with <session_id> uuid
 
         Args:
-            user (Player): Player object
+            player (Player): Player object
             session_id (UUID4): Session object uuid to add player into
 
         Returns:
             bool: True if added successfully, False if not
-        """        
-        data = await cls.get_data_by_uuid(session_id)
-        if len(data["players_id_list"]) < data["max_players"]:
-            data["players_id_list"].append(user.__dict__())
+        """ 
+        data = await cls.get_data_by_uuid(session_id=session_id)
+        if len(data["players"]) < data["players"]:
+            data["players"].append(player.__dict__())
             data_json = json.dumps(data)
-            await cls.set_data(session_id, data_json)
+            await cls.set_data(session_id=session_id, data_json=data_json)
             return True
         return False
     
+    # TODO maybe bug when 1 player
     @classmethod
     async def remove_player(cls, user_id: UUID4, session_id: UUID4) -> bool:
         """remove player from players_id_list of Session object with <session_id> uuid
@@ -161,16 +235,28 @@ class Session:
 
         Returns:
             bool: True if removed successfully, False if not
-        """        
-        data = await cls.get_data_by_uuid(session_id)
-        for user in data["players_id_list"]:
-            if user["id"] == user_id:
-                data["players_id_list"].remove(user)
-                data_json = json.dumps(data)
-                await cls.set_data(session_id, data_json)
-                return True
-        return False
+        """    
+        data = await cls.get_data_by_uuid(session_id=session_id)
+        if not(str(user_id) in data["players"]):
+            return False
+        data["players"].remove(str(user_id))
+        player_seat = data["seats"].index(str(user_id))
+        seat_index = (player_seat + 1) % data["max_players"]
+        next_player_seat = data["seats"][seat_index]
+        while next_player_seat is None:
+            seat_index = (seat_index + 1) % data["max_players"]
+            next_player_seat = data["seats"][seat_index]
+        if data["current_player"] == player_seat:
+            data["current_player"] == next_player_seat
+        if data["dealer"] == player_seat:
+            data["dealer"] == next_player_seat
     
+        data["seats"] = list(map(lambda x: x.replace(str(user_id), None), data["seats"]))
+        data_json = json.dumps(data)
+        await cls.set_data(session_id=session_id, data_json=data_json)
+        return True
+    
+    # TODO complete
     async def save(self) -> None:
         """accept changes in Session object data
         """        
@@ -182,6 +268,7 @@ class Session:
         data_json = json.dumps(data)
         await self.set_data(session_id=self.id, data_json=data_json)
     
+    # TODO complete
     def add_player(self, user: Player) -> bool:
         """add player into current session
 
@@ -196,6 +283,7 @@ class Session:
             return True
         return False
 
+    # TODO complete
     def remove_player(self, user_id: UUID4) -> bool:
         """remove player from current session
 
