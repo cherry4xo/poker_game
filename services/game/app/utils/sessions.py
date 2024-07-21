@@ -10,6 +10,14 @@ from app.utils.redis import r, ping_redis_connection
 from app import settings
 
 
+class PlayerStatus(Enum):
+    NOT_READY = 0
+    READY = 1
+    PLAYING = 2
+    STAYING = 3
+    PASS = 4
+
+
 class Player:
     def __init__(self, uuid: UUID4, name: str, balance: float = None) -> None:
         self.id = uuid
@@ -18,6 +26,7 @@ class Player:
         self.hand = []
         self.currentbet = 0
         self.handscore = 0
+        self.status = PlayerStatus.NOT_READY
 
     @classmethod
     async def create(cls, data: dict) -> "Player":
@@ -27,7 +36,41 @@ class Player:
         player.hand = data["hand"]
         player.currentbet = data["currentbet"]
         player.handscore = data["handscore"]
+        player.status = PlayerStatus[f"{data['status']}"]
         return player
+    
+    async def _bet(self, value: float) -> Optional[float]:
+        try:
+            self.balance -= value
+            self.currentbet += value
+            self.status = PlayerStatus.STAYING
+            return value
+        except Exception:
+            return None
+        
+    async def _call(self, bet: float) -> Optional[float]:
+        try:
+            delta = bet - self.currentbet
+            self.balance -= delta
+            self.status = PlayerStatus.STAYING
+            return delta
+        except Exception:
+            return None
+        
+    async def _pass(self) -> bool:
+        try:
+            self.status = PlayerStatus.PASS
+            return True
+        except Exception:
+            return None
+        
+    async def _raise(self, value: float) -> Optional[float]:
+        try:
+            self.balance -= value
+            self.currentbet += value
+            self.status = PlayerStatus.STAYING
+        except Exception:
+            return None
 
     def __dict__(self) -> dict:
         data = {
@@ -36,7 +79,8 @@ class Player:
             "balance": self.balance,
             "hand": self.hand,
             "currentbet": self.currentbet,
-            "handscore": self.handscore
+            "handscore": self.handscore,
+            "status": self.status.name
         }
         return data
 
@@ -62,12 +106,13 @@ class SessionStage(Enum):
 
 
 class Session:
+    # COMPLETE
     def __init__(
         self,
         uuid: Optional[UUID4] = None,
         max_players: Optional[int] = None,
-        small_blind: Optional[float] = None,
-        big_blind: Optional[float] = None,
+        small_blind: Optional[float] = settings.DEFAULT_SMALL_BLIND,
+        big_blind: Optional[float] = settings.DEFAULT_BIG_BLIND,
         players: List[Player] = [],
         seats: List[Optional[UUID4]] = [],
         status: Optional[SessionStatus] = SessionStatus.LOBBY,
@@ -111,6 +156,7 @@ class Session:
         else:
             self.data = data
 
+    # COMPLETE
     @classmethod
     async def get_data_by_uuid(cls, session_id: UUID4) -> dict:
         """get dict game info by Session object uuid
@@ -126,6 +172,7 @@ class Session:
         data: dict = json.loads(data_json)
         return data
     
+    # COMPLETE
     @classmethod
     async def get_session_by_uuid(cls, session_id: UUID4) -> Optional["Session"]:
         """get Session object by uuid
@@ -141,7 +188,7 @@ class Session:
         data: dict = json.loads(data_json)
         if data == {}:
             return None
-        players = [Player.create(data=user_data) for user_data in data["players_id_list"]]
+        players = [Player.create(data=user_data) for user_data in data["players"]]
         seats = [UUID(uuid) for uuid in data["seats"]]
         session = Session(uuid=data["id"],
                           max_players=data["max_players"],
@@ -158,6 +205,7 @@ class Session:
                           data=data)
         return session
     
+    # COMPLETE
     @classmethod
     async def set_data(cls, session_id: UUID4, data_json: str) -> None:
         """set or override Session info
@@ -169,13 +217,14 @@ class Session:
         async with r.pipeline(transaction=True) as pipe:
             await (pipe.set(f"session:{session_id}", data_json).execute())
 
+    # COMPLETE
     @classmethod
     async def create(
         cls,
         uuid: Optional[UUID4] = None,
         max_players: Optional[int] = None,
-        small_blind: Optional[float] = None,
-        big_blind: Optional[float] = None,
+        small_blind: Optional[float] = settings.DEFAULT_SMALL_BLIND,
+        big_blind: Optional[float] = settings.DEFAULT_BIG_BLIND,
         players: List[Player] = [],
         seats: List[Optional[UUID4]] = [],
         status: Optional[SessionStatus] = SessionStatus.LOBBY,
@@ -185,7 +234,27 @@ class Session:
         current_bet: Optional[float] = None,
         total_bet: Optional[float] = None,
         data: Optional[dict] = None
-    ):
+    ) -> "Session":
+        """creates new Session object
+
+        Args:
+            uuid (Optional[UUID4], optional): session uuid. Defaults to None.
+            max_players (Optional[int], optional): session max players count. Defaults to None.
+            small_blind (Optional[float], optional): game small blind. Defaults to None.
+            big_blind (Optional[float], optional): game big blind. Defaults to None.
+            players (List[Player], optional): list of Player objects. Defaults to [].
+            seats (List[Optional[UUID4]], optional): list of seats(not None is busy). Defaults to [].
+            status (Optional[SessionStatus], optional): game status(lobby, pause, game). Defaults to SessionStatus.LOBBY.
+            stage (Optional[SessionStage], optional): game stage(null, first, second, third, fourth). Defaults to SessionStage.NULL.
+            current_player (Optional[int], optional): game current player(number of seat). Defaults to None.
+            dealer (Optional[int], optional): current game dealer(number of seat). Defaults to None.
+            current_bet (Optional[float], optional): game current bet. Defaults to None.
+            total_bet (Optional[float], optional): game total bet. Defaults to None.
+            data (Optional[dict], optional): all the game info. Defaults to None.
+
+        Returns:
+            Session: Session object
+        """        
         session = cls(
             uuid=uuid,
             max_players=max_players,
@@ -205,6 +274,7 @@ class Session:
         await cls.set_data(session_id=session.id, data_json=data_json)
         return session
     
+    # COMPLETE
     @classmethod
     async def add_player(cls, player: Player, session_id: UUID4) -> bool:
         """add player into players_id_list of Session object with <session_id> uuid
@@ -224,6 +294,7 @@ class Session:
             return True
         return False
     
+    # COMPLETE
     # TODO maybe bug when 1 player
     @classmethod
     async def remove_player(cls, user_id: UUID4, session_id: UUID4) -> bool:
@@ -256,15 +327,24 @@ class Session:
         await cls.set_data(session_id=session_id, data_json=data_json)
         return True
     
-    # TODO complete
+    # COMPLETE
     async def save(self) -> None:
         """accept changes in Session object data
-        """        
+        """
         data = {
-            "id": self.id,
-            "max_players": self.max_players,
-            "players_id_list": [user.__dict__() for user in self.players_id_list]
-        }
+                "id": str(self.id),
+                "status": self.status.name,
+                "seats": [str(seat) for seat in self.seats],
+                "small_blind": self.small_blind,
+                "big_blind": self.big_blind,
+                "max_players": self.max_players,
+                "players": [player.__dict__() for player in self.players],
+                "stage": self.stage.name,
+                "current_player": self.current_player,
+                "dealer": self.dealer,
+                "current_bet": self.current_bet,
+                "total_bet": self.total_bet
+            }
         data_json = json.dumps(data)
         await self.set_data(session_id=self.id, data_json=data_json)
     
