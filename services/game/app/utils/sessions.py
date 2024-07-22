@@ -328,6 +328,16 @@ class Session:
         return True
     
     # COMPLETE
+    @classmethod
+    async def delete(cls, session_id: UUID4) -> bool:
+        session = await cls.get_session_by_uuid(session_id=session_id)
+        if session is None:
+            return False
+        async with r.pipeline(transaction=True) as pipe:
+            await (pipe.delete(f"session:{session_id}").execute())
+        return True
+    
+    # COMPLETE
     async def save(self) -> None:
         """accept changes in Session object data
         """
@@ -348,43 +358,45 @@ class Session:
         data_json = json.dumps(data)
         await self.set_data(session_id=self.id, data_json=data_json)
     
-    # TODO complete
-    def add_player(self, user: Player) -> bool:
-        """add player into current session
+    # # TODO complete
+    # def add_player(self, user: Player) -> bool:
+    #     """add player into current session
 
-        Args:
-            user (Player): Player object
+    #     Args:
+    #         user (Player): Player object
 
-        Returns:
-            bool: True if added successfully, False if not
-        """        
-        if len(self.players_id_list) < self.max_players:
-            self.players_id_list.append(user)
-            return True
-        return False
+    #     Returns:
+    #         bool: True if added successfully, False if not
+    #     """        
+    #     if len(self.players_id_list) < self.max_players:
+    #         self.players_id_list.append(user)
+    #         return True
+    #     return False
 
-    # TODO complete
-    def remove_player(self, user_id: UUID4) -> bool:
-        """remove player from current session
+    # # TODO complete
+    # def remove_player(self, user_id: UUID4) -> bool:
+    #     """remove player from current session
 
-        Args:
-            user_id (UUID4): Player object uuid
+    #     Args:
+    #         user_id (UUID4): Player object uuid
 
-        Returns:
-            bool: True if removed successfully, False if not
-        """        
-        for player in self.players_id_list:
-            if player.id == user_id:
-                self.players_id_list.remove(player)
-                return True
-        return False
+    #     Returns:
+    #         bool: True if removed successfully, False if not
+    #     """        
+    #     for player in self.players_id_list:
+    #         if player.id == user_id:
+    #             self.players_id_list.remove(player)
+    #             return True
+    #     return False
 
 
 class SessionsContainer:
+    # COMPLETE
     def __init__(self) -> None:
         self.sessions: List[UUID4] = []
         self.factory: SessionFactory = create_factory()
 
+    # COMPLETE
     async def find_session_by_uuid(self, session_id: UUID4) -> Optional[Session]:
         """finds session by its uuid
 
@@ -397,6 +409,7 @@ class SessionsContainer:
         session = await Session.get_session_by_uuid(session_id=session_id)
         return session
 
+    # COMPLETE
     async def create_session(self, max_players: int = None) -> Session:
         """creates session and appends it in sessions_container
 
@@ -410,6 +423,7 @@ class SessionsContainer:
         self.sessions.append(session.id)
         return session
 
+    # COMPLETE
     async def remove_session_by_uuid(self, uuid: UUID4) -> bool:
         """deletes Session object and removes it from sessions_container
 
@@ -419,12 +433,15 @@ class SessionsContainer:
         Returns:
             bool: True if deleted, False if not
         """
+        flag = await Session.delete(session_id=uuid)
+        if not flag:
+            return False
         try:
             self.sessions.remove(uuid)
-            return True
         except ValueError:
             return False
 
+    # COMPLETE
     async def find_user_session(self, uuid: UUID4) -> Optional[Session]:
         """finds user's current session
 
@@ -436,11 +453,12 @@ class SessionsContainer:
         """
         for session_id in self.sessions:
             session = await Session.get_session_by_uuid(session_id=session_id)
-            for player in session.players_id_list:
+            for player in session.players:
                 if player.id == uuid:
                     return session
         return None
     
+    # COMPLETE
     async def get_session_by_uuid(self, uuid: UUID4) -> Optional[Session]:
         """find and get Session object by its uuid
 
@@ -452,6 +470,7 @@ class SessionsContainer:
         """        
         return await Session.get_session_by_uuid(session_id=uuid)
     
+    # COMPLETE
     async def add_user(self, user_id: UUID4, session_id: UUID4) -> bool:
         """adds user uuid into Session object with <session_id> uuid
 
@@ -464,10 +483,26 @@ class SessionsContainer:
         """        
         if await self.find_user_session(uuid=user_id) is not None:
             return False
-        session = await self.get_session_by_uuid(uuid=session_id)
+        if await self.get_session_by_uuid(uuid=session_id) is None:
+            return False
         player = Player(uuid=user_id)
-        return session.add_player(player)
+        return await Session.add_player(player=player, session_id=session_id)
+    
+    # COMPLETE
+    async def remove_player(self, user_id: UUID4) -> bool:
+        """remove player from his session if it exists
 
+        Args:
+            user_id (UUID4): Player object uuid
+
+        Returns:
+            bool: True if deleted successfully, False if not
+        """        
+        user_session = await self.find_user_session(uuid=user_id)
+        if user_session is None:
+            return False
+        return await Session.remove_player(user_id=user_id, session_id=user_session.id)
+    
 
 class SessionFactory(AbstractSessionFactory):
     async def create_session(self, max_players: int = None):
