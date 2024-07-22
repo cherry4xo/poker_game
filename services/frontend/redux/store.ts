@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
-import miscReducer from './miscSlice';
+import miscReducer from '@/redux/miscSlice';
+import gameReducer from '@/redux/gameSlice';
 
 export const store = configureStore({
     reducer: {
-        misc: miscReducer
+        misc: miscReducer,
+        game: gameReducer
     }
 });
 
