@@ -8,9 +8,10 @@ from fastapi.exceptions import WebSocketException
 from pydantic import UUID4
 
 from app.models import User
-from app.utils.sessions import sessions_container, Session
 from app.schemas import SessionCreateOut
+from app.utils.sessions import sessions_container, Session, Player
 from app.utils.contrib import decode_jwt
+from app.utils.broadcast import Broadcaster
 
 from app import settings
 
@@ -44,7 +45,14 @@ async def webscoket_endpoint(
     if session.id != session_id:
         return RedirectResponse(f"{settings.WS_BASE_URL}/{session.id}")
     await websocket.accept()
+    player = Player(uuid=user.uuid, name=user.username, websocket=websocket)
+    await session.add_player(player=player)
     while True:
-        data = await websocket.receive_text()
-        await websocket.send_text(f"Message: {data}")
-    
+        data_json = await websocket.receive_json()
+        data = json.loads(data_json)
+        if data["type"] == "take_seat":
+            ans = await session.take_seat(user.uuid, seat_num=data["seat_num"])
+            await session.send_personal_message(user.uuid, ans)
+        if data["type"] == "start":
+            ans = await session.start_game()
+            await session.send_all_data(ans)
