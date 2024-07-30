@@ -201,16 +201,12 @@ class Session(Broadcaster):
                 player.status = PlayerStatus[f"{data['status']}"]
         return data    
 
-    # COMPLETE
-    # NOTE for existing Session object
     async def set_data(self, data: dict) -> None:
         data_json = json.dumps(data, default=str)
         async with r.pipeline(transaction=True) as pipe:
             await (pipe.set(f"session:{self.id}", data_json).execute())
         self.data = data
     
-    # COMPLETE
-    # NOTE for existing Session object
     async def add_player(self, player: Player) -> bool:
         await self.get_data()
         if len(self.players) < self.max_players:
@@ -250,26 +246,26 @@ class Session(Broadcaster):
     # COMPLETE
     # NOTE for existing Session object
     async def remove_player(self, user_id: UUID4) -> bool:
-        data = await self.get_data()
-        if not(str(user_id) in data["players"]):
+        await self.get_data()
+        player = self.get_player(player_id=user_id)
+        if player is None:
             return False
-        data["players"].remove(str(user_id))
-        player_seat = data["seats"].index(str(user_id))
-        seat_index = self._get_next_busy_seat(user_id=user_id)
-        if data["current_player"] == player_seat:
-            data["current_player"] == seat_index
-        if data["dealer"] == player_seat:
-            data["dealer"] == seat_index
-        if data["owner"] == str(user_id):
-            new_owner_index = randint(0, len(data["players"]) - 1)
-            data["owner"] = data["players"][new_owner_index]["id"]
-        data["seats"] = list(map(lambda x: x.replace(str(user_id), None), data["seats"]))
-        await self.set_data(data=data)
-
-        for player in self.players:
-            if player.id == user_id:
-                self.players.remove(player)
-                return True
+        self.players.remove(player)
+        await self.disconnect_player(player=player)
+        player_seat = self.seats.index(user_id)
+        seat_index = await self._get_next_busy_seat(user_id=user_id)
+        if self.current_player == player_seat:
+            self.current_player == seat_index
+        if self.dealer == player_seat:
+            self.dealer == seat_index
+        if self.owner == str(user_id):
+            new_owner_index = randint(0, len(self.players) - 1)
+            self.owner = self.players[new_owner_index].id
+        for seat in self.seats:
+            if seat == user_id:
+                seat = None
+        await self.save()
+        return True
     
     # COMPLETE
     @classmethod
@@ -310,6 +306,7 @@ class Session(Broadcaster):
                 "message": "this seat is already taken"
             }
         self.seats[seat_num] = player_id
+        await self.save()
         return {
             "type": "success",
             "message": f"player's seat: {seat_num}"

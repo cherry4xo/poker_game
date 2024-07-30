@@ -28,7 +28,7 @@ async def create_session(
     if session is not None:
         return SessionCreateOut(uuid=session.id, players_id_list=session.players)
     session = await sessions_container.create_session()
-    return SessionCreateOut(uuid=session.id, players_id_list=session.players)
+    return SessionCreateOut(uuid=session.id, players_id_list=[player.dict for player in session.players])
     
 
 @router.websocket("/{session_id}/{username}")
@@ -65,5 +65,4 @@ async def webscoket_endpoint(
                 ans = await session.bet(user_id=user_id, value=data["value"])
                 await session.send_all_data(ans)
     except WebSocketDisconnect:
-        await session.disconnect_player(player=player)
         await session.remove_player(player.id)
