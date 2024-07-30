@@ -19,7 +19,9 @@ def init_middlewares(app: FastAPI):
     )
 
 
-app = FastAPI()
+app = FastAPI(
+    root_path="/poker/"
+)
 
 
 main_app_lifespan = app.router.lifespan_context

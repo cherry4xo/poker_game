@@ -10,6 +10,7 @@ services:
     links:
       - redis
       - users-postgres
+    command: python3 -u -m uvicorn main:app --host 0.0.0.0 --port 8083
   users:
     build: ./services/users
     restart: unless-stopped
@@ -63,3 +64,7 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3000"
+
+volumes:
+  redis:
+  users-postgres:
