@@ -25,8 +25,8 @@ DB_CONNECTIONS = {
 SECRET_KEY = os.getenv("SECRET_KEY", default="".join([random.choice(string.ascii_letters) for _ in range(32)]))
 CLIENT_ID = os.getenv("CLIENT_ID", default="".join([random.choice(string.ascii_letters) for _ in range(32)]))
 
-LOGIN_URL = f"http://auth:8083/login/access-token"
-WS_BASE_URL = f"ws://{API_HOST}:{API_PORT}/game"
+LOGIN_URL = f"http://auth:8083/poker_auth/login/access-token"
+WS_BASE_URL = f"ws://{API_HOST}:{API_PORT}/poker_game/game"
 
 CORS_ORIGINS = ["*"]
 CORS_ALLOW_CREDENTIALS = True

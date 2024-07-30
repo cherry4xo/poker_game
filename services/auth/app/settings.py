@@ -25,8 +25,8 @@ DB_CONNECTIONS = {
 SECRET_KEY = os.getenv("SECRET_KEY", default="".join([random.choice(string.ascii_letters) for _ in range(32)]))
 CLIENT_ID = os.getenv("CLIENT_ID", default="".join([random.choice(string.ascii_letters) for _ in range(32)]))
 
-LOGIN_URL = "/login/access-token"
-REFRESH_URL = "/login/refresh-token"
+LOGIN_URL = "http://0.0.0.0:8083/poker_auth/login/access-token"
+REFRESH_URL = "http://0.0.0.0:8083/poker_auth/login/refresh-token"
 
 # ACCESS_TOKEN_EXPIRE_MINUTES = 15 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 14 # change in release to 15 minutes
