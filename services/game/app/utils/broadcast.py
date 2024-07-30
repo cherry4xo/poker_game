@@ -23,7 +23,7 @@ class Broadcaster:
             "type": "connect",
             "player_data": player.__dict__
         }
-        data_json = json.dumps(data)
+        data_json = json.dumps(data, default=str)
         for player in self.players:
             await player.websocket.send_json(data=data_json)
 
@@ -32,17 +32,17 @@ class Broadcaster:
             "type": "disconnect",
             "player_data": player.__dict__
         }
-        data_json = json.dumps(data)
+        data_json = json.dumps(data, default=str)
         for player in self.players:
             await player.websocket.send_json(data=data_json)
 
     async def send_all_data(self, data: dict) -> None:
-        data_json = json.dumps(data)
+        data_json = json.dumps(data, default=str)
         for player in self.players:
             await player.websocket.send_json(data=data_json)
 
     async def send_personal_message(self, player_id: UUID4, data: dict):
         player = self.get_player(player_id=player_id)
         if player is not None:
-            data_json = json.dumps(data)
+            data_json = json.dumps(data, default=str)
             await player.websocket.send_json(data_json)

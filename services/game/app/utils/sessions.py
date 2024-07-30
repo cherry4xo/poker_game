@@ -167,7 +167,7 @@ class Session(Broadcaster):
             dict: Session info dict formatted
         """        
         async with r.pipeline(transaction=True) as pipe:
-            data_json = await (pipe.get(f"session:{session_id}").execute())
+            data_json = (await (pipe.get(f"session:{session_id}").execute()))[0]
         data: dict = json.loads(data_json)
         return data
 
@@ -175,16 +175,16 @@ class Session(Broadcaster):
     # NOTE for existing Session object
     async def get_data(self) -> dict:
         async with r.pipeline(transaction=True) as pipe:
-            data_json = await (pipe.get(f"session:{self.id}").execute())
+            data_json = (await (pipe.get(f"session:{self.id}").execute()))[0]
         data: dict = json.loads(data_json)
         self.data = data
         self.id = UUID(data["id"])
-        self.status.name = data["status"]
-        self.seats = [UUID(seat) if seat is not None else None for seat in data["seats"]]
+        self.status = SessionStatus[f"{data['status']}"]
+        self.seats = [UUID(seat) if seat != "None" else None for seat in data["seats"]]
         self.small_blind = data["small_blind"]
         self.big_blind = data["big_blind"]
         self.max_players = data["max_players"]
-        self.stage.name = data["stage"]
+        self.stage = SessionStage[f"{data['stage']}"]
         self.board = data["board"]
         self.current_player = data["current_player"]
         self.dealer = data["dealer"]
@@ -203,7 +203,7 @@ class Session(Broadcaster):
     # COMPLETE
     # NOTE for existing Session object
     async def set_data(self, data: dict) -> None:
-        data_json = json.dumps(data)
+        data_json = json.dumps(data, default=str)
         async with r.pipeline(transaction=True) as pipe:
             await (pipe.set(f"session:{self.id}", data_json).execute())
         self.data = data
@@ -212,7 +212,7 @@ class Session(Broadcaster):
     # NOTE for existing Session object
     async def add_player(self, player: Player) -> bool:
         data = await self.get_data()
-        if len(data["players"]) < data["players"]:
+        if len(data["players"]) < data["max_players"]:
             data["players"].append(player.dict)
             await self.set_data(data)
             await self.connect_player(player)
@@ -470,7 +470,7 @@ class Session(Broadcaster):
     #         Session: Session object
     #     """        
     #     async with r.pipeline(transaction=True) as pipe:
-    #         data_json = await (pipe.get(f"session:{session_id}").execute())
+    #         data_json = await (pipe.get(f"session:{session_id}").execute())[0]
     #     data: dict = json.loads(data_json)
     #     if data == {}:
     #         return None
