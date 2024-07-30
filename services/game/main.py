@@ -33,7 +33,7 @@ async def lifespan_wrapper(app):
 app.router.lifespan_context = lifespan_wrapper
 
 init_middlewares(app)
-app.include_router(game_router, prefix="/users", tags=["login"])
+app.include_router(game_router, prefix="/game", tags=["game"])
 
 # if __name__ == "__main__":
 #     uvicorn.run(app, host=settings.API_HOST, port=int(settings.API_PORT))

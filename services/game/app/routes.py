@@ -19,7 +19,7 @@ from app import settings
 router = APIRouter()
 
 
-@router.post("/game/create", response_model=SessionCreateOut, status_code=200)
+@router.post("/create", response_model=SessionCreateOut, status_code=200)
 async def create_session(
     user: User = Depends(decode_jwt)
 ):
@@ -30,7 +30,7 @@ async def create_session(
     return SessionCreateOut(uuid=session.id, players_id_list=session.players_id_list)
     
 
-@router.websocket("/game/{uuid}")
+@router.websocket("/{uuid}")
 async def webscoket_endpoint(
     session_id: UUID4, 
     websocket: WebSocket,
