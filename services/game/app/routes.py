@@ -56,3 +56,5 @@ async def webscoket_endpoint(
         if data["type"] == "start":
             ans = await session.start_game()
             await session.send_all_data(ans)
+        if data["type"] == "bet":
+            ans = await session.bet(user_id=user.uuid, value=data["value"])

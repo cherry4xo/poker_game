@@ -232,6 +232,19 @@ class Session(Broadcaster):
             seat_index = (seat_index + 1) % data["max_players"]
             next_player_seat = data["seats"][seat_index]
         return seat_index
+    
+    async def _get_player_by_index(self, index: int) -> Player:
+        await self.get_data()
+        player_id = self.seats[index]
+        player = self.get_player(player_id=player_id)
+        return player
+    
+    async def _get_index_by_player(self, player_id: UUID4) -> int:
+        await self.get_data()
+        try:
+            return self.seats.index(player_id)
+        except ValueError:
+            return -1
 
     # COMPLETE
     # NOTE for existing Session object
@@ -320,17 +333,41 @@ class Session(Broadcaster):
         dealer = self.get_random_player()
         dealer._bet(self.small_blind)
         self.total_bet += self.small_blind
+        self.current_bet = self.small_blind
         next_player_index = self._get_next_busy_seat(dealer.id)
         next_player_id = self.seats[next_player_index]
         next_player = self.get_player(player_id=next_player_id)
         next_player._bet(self.big_blind)
         self.total_bet += self.big_blind
+        self.current_bet = self.big_blind
         self.current_player = next_player_index
         await self.save()
 
         return {
             "type": "success",
             "message": "started game",
+            "data": self.data
+        }
+    
+    async def bet(self, player_id: UUID4, value: float) -> dict:
+        await self.get_data()
+        user_seat = self._get_index_by_player(player_id=player_id)
+        if user_seat == -1 or user_seat != self.current_player:
+            return {
+                "type": "error",
+                "message": "now is not this user move"
+            }
+        player = self.get_player(player_id=player_id)
+        player._bet(value)
+        self.total_bet += value
+        self.current_bet = value if self.current_bet < value else self.current_bet
+        next_player_index = self._get_next_busy_seat(player.id)
+        self.current_player = next_player_index
+        await self.save()
+
+        return {
+            "type": "success",
+            "message": "user betted",
             "data": self.data
         }
         
