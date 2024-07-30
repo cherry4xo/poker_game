@@ -76,13 +76,13 @@ class Session(Broadcaster):
         if data is None:
             self.data = {
                 "id": str(self.id),
-                "status": self.status.name,
+                "status": self.status.value,
                 "seats": seats_dict,
                 "small_blind": self.small_blind,
                 "big_blind": self.big_blind,
                 "max_players": self.max_players,
                 "players": [player.dict for player in self.players],
-                "stage": self.stage.name,
+                "stage": self.stage.value,
                 "board": self.board.dict,
                 "current_player": self.current_player,
                 "dealer": self.dealer,
@@ -179,12 +179,12 @@ class Session(Broadcaster):
         data: dict = json.loads(data_json)
         self.data = data
         self.id = UUID(data["id"])
-        self.status = SessionStatus[f"{data['status']}"]
+        self.status = SessionStatus(data['status'])
         self.seats = [UUID(seat) if seat != "None" else None for seat in data["seats"]]
         self.small_blind = data["small_blind"]
         self.big_blind = data["big_blind"]
         self.max_players = data["max_players"]
-        self.stage = SessionStage[f"{data['stage']}"]
+        self.stage = SessionStage(data['stage'])
         board = dict_to_pokerhand(hand_dict=data["board"])
         self.board = board
         self.current_player = data["current_player"]
@@ -198,7 +198,7 @@ class Session(Broadcaster):
                 player.balance = player["balance"]
                 player.hand = dict_to_pokerhand(player["hand"])
                 player.currentbet = player["currentbet"]
-                player.status = PlayerStatus[f"{data['status']}"]
+                player.status = PlayerStatus(data['status'])
         return data    
 
     async def set_data(self, data: dict) -> None:
@@ -285,13 +285,13 @@ class Session(Broadcaster):
         """
         self.data = {
                 "id": str(self.id),
-                "status": self.status.name,
+                "status": self.status.value,
                 "seats": [str(seat) for seat in self.seats],
                 "small_blind": self.small_blind,
                 "big_blind": self.big_blind,
                 "max_players": self.max_players,
                 "players": [player.dict for player in self.players],
-                "stage": self.stage.name,
+                "stage": self.stage.value,
                 "board": self.board.dict,
                 "current_player": self.current_player,
                 "dealer": self.dealer,

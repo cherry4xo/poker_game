@@ -194,7 +194,7 @@ class Player:
                         balance=data["balance"])
         player.hand = dict_to_pokerhand(data["hand"])
         player.currentbet = data["currentbet"]
-        player.status = PlayerStatus[f"{data['status']}"]
+        player.status = PlayerStatus(data['status'])
         return player
     
     async def _bet(self, value: float) -> Optional[float]:
