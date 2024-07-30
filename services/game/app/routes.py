@@ -31,7 +31,7 @@ async def create_session(
     return SessionCreateOut(uuid=session.id, players_id_list=session.players)
     
 
-@router.websocket("/{session_id}")
+@router.websocket("/{session_id}/{username}")
 async def webscoket_endpoint(
     session_id: UUID4, 
     username: str,
@@ -39,7 +39,7 @@ async def webscoket_endpoint(
     # user: User = Depends(decode_jwt)
 ):
     user_id = uuid4()
-    session: Optional[Session] = await sessions_container.get_session(session_id=session_id)
+    session: Optional[Session] = sessions_container.get_session(session_id=session_id)
     if session is None:
         raise WebSocketException(
             code=1007,

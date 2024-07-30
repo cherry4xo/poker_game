@@ -1,7 +1,8 @@
 from websocket import create_connection
 
-ws = create_connection("wss://0.0.0.0:8081/poker_game/game/1e837479-7c0c-4b2f-bd27-0641e234906f",
-                       header={"username": "cherry4xo"})
+uuid = "d90e92e0-796b-49cb-9a1c-918d3af73f4b"
+
+ws = create_connection(f"ws://0.0.0.0:8081/poker_game/game/{uuid}/cherry4xo")
 print(ws.recv())
 print("Hello")
 ws.send("data")
