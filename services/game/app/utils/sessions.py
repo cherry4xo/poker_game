@@ -185,7 +185,8 @@ class Session(Broadcaster):
         self.big_blind = data["big_blind"]
         self.max_players = data["max_players"]
         self.stage = SessionStage[f"{data['stage']}"]
-        self.board = data["board"]
+        board = dict_to_pokerhand(hand_dict=data["board"])
+        self.board = board
         self.current_player = data["current_player"]
         self.dealer = data["dealer"]
         self.current_bet = data["current_bet"]
@@ -211,10 +212,10 @@ class Session(Broadcaster):
     # COMPLETE
     # NOTE for existing Session object
     async def add_player(self, player: Player) -> bool:
-        data = await self.get_data()
-        if len(data["players"]) < data["max_players"]:
-            data["players"].append(player.dict)
-            await self.set_data(data)
+        await self.get_data()
+        if len(self.players) < self.max_players:
+            self.players.append(player)
+            await self.save()
             await self.connect_player(player)
             return True
         return False

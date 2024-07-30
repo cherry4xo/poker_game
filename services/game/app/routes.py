@@ -53,8 +53,8 @@ async def webscoket_endpoint(
     await session.add_player(player=player)
     try:
         while True:
-            data_json = await websocket.receive_json()
-            data = json.loads(data_json)
+            data = await websocket.receive_json()
+            # data = json.loads(data_json)
             if data["type"] == "take_seat":
                 ans = await session.take_seat(user_id, seat_num=data["seat_num"])
                 await session.send_personal_message(user_id, ans)
