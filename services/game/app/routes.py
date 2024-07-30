@@ -28,7 +28,7 @@ async def create_session(
     if session is not None:
         return SessionCreateOut(uuid=session.id, players_id_list=session.players)
     session = await sessions_container.create_session()
-    return SessionCreateOut(uuid=session.id, players_id_list=[player.dict for player in session.players])
+    return SessionCreateOut(uuid=session.id, players_id_list=[player.id for player in session.players])
     
 
 @router.websocket("/{session_id}/{username}")
