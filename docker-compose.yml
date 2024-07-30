@@ -34,6 +34,14 @@ services:
       - 5432
     volumes:
       - "users-postgres:/data/db"
+  game: 
+    build: ./services/auth
+    restart: unless-stopped
+    ports:
+      - "8081:8083"
+    links:
+      - redis
+      - users-postgres
   redis:
     image: redis:alpine
     restart: unless-stopped
