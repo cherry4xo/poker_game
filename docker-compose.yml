@@ -42,6 +42,7 @@ services:
     links:
       - redis
       - users-postgres
+    command: python3 -u -m uvicorn main:app --host 0.0.0.0 --port 8083
   redis:
     image: redis:alpine
     restart: unless-stopped
