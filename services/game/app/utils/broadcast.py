@@ -10,7 +10,7 @@ from app.utils.player import Player
 
 class Broadcaster:
     def __init__(self, players: List[Player] = []):
-        self.players = List[Player] = players
+        self.players: List[Player] = players
 
     def get_player(self, player_id: UUID4) -> Optional[Player]:
         for player in self.players:

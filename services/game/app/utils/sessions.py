@@ -56,14 +56,14 @@ class Session(Broadcaster):
         data: Optional[dict] = None,
     ) -> None:
         super().__init__(players)
+        self.max_players: int = max_players or settings.DEFAULT_MAX_PLAYERS
         if seats == []:
-            seats = [None for _ in range(max_players)]
+            seats = [None for _ in range(self.max_players)]
         self.id: UUID4 = uuid or uuid4()
         self.seats: List[Optional[UUID4]] = seats
         self.small_blind: float = small_blind
         self.big_blind: float = big_blind
         self.status: SessionStatus = status
-        self.max_players: int = max_players or settings.DEFAULT_MAX_PLAYERS
         self.stage: SessionStage = stage
         self.board: Hand = board
         self.current_player: Optional[int] = current_player
