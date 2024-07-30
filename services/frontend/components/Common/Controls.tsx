@@ -7,21 +7,22 @@ export function Controls() {
     const dispatch = useDispatch();
     const { status, players, current_player } = useSelector(state => state.game);
 
-    const toSupport = Math.max(...players.map((p: IPlayer) => p.bet)) - players[current_player]?.bet || 5;
+    const toSupport = current_player ? (Math.max(...players.map((p: IPlayer) => p.currentbet)) - players[current_player]?.currentbet || 5) : 0;
 
-    const buttons = {
-        starting: [
+    const buttons = [
+        [],
+        [
             { label: 'Start', color: 'yellow', action: { type: 'game/startGame' } }
         ],
-        playing: [
+        [
             { label: 'Bet ' + toSupport, color: 'teal', action: { type: 'game/bet', payload: toSupport } },
             // { label: 'Check', color: 'teal' },
             { label: 'Pass', color: 'red', action: { type: 'game/pass' } }
         ]
-    };
+    ];
 
     return <HStack h='80px' spacing='12px'>
-        {buttons[status as keyof typeof buttons].map((b: any) =>
-            <Button h='100%' px='40px' rounded='10px' variant='outline' colorScheme={b.color} onClick={() => dispatch(b.action)}>{b.label}</Button>)}
+        {buttons[status].map((b: any, i: number) =>
+            <Button key={i} h='100%' px='40px' rounded='10px' variant='outline' colorScheme={b.color} onClick={() => dispatch(b.action)}>{b.label}</Button>)}
     </HStack>
 }
