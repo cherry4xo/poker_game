@@ -35,7 +35,7 @@ services:
     volumes:
       - "users-postgres:/data/db"
   game: 
-    build: ./services/auth
+    build: ./services/game
     restart: unless-stopped
     ports:
       - "8081:8083"
