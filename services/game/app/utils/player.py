@@ -238,6 +238,6 @@ class Player:
             "balance": self.balance,
             "hand": self.hand.dict,
             "currentbet": self.currentbet,
-            "status": self.status.name
+            "status": self.status.value
         }
         return data

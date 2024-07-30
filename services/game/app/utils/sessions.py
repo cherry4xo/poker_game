@@ -255,10 +255,10 @@ class Session(Broadcaster):
             player_seat = self.seats.index(user_id)
             self.seats[player_seat] = None
             seat_index = await self._get_next_busy_seat(user_id=user_id)
-        if self.current_player == player_seat:
-            self.current_player == seat_index
-        if self.dealer == player_seat:
-            self.dealer == seat_index
+            if self.current_player == player_seat:
+                self.current_player == seat_index
+            if self.dealer == player_seat:
+                self.dealer == seat_index
         if self.owner == str(user_id):
             new_owner_index = randint(0, len(self.players) - 1)
             self.owner = self.players[new_owner_index].id
