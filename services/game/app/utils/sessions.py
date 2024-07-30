@@ -47,7 +47,7 @@ class Session(Broadcaster):
         seats: List[Optional[UUID4]] = [],
         status: Optional[SessionStatus] = SessionStatus.LOBBY,
         stage: Optional[SessionStage] = SessionStage.PREFLOP,
-        board: List[Hand] = [],
+        board: Hand = Hand(),
         current_player: Optional[int] = None,
         dealer: Optional[int] = None,
         current_bet: Optional[float] = None,

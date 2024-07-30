@@ -1,11 +1,11 @@
 import json
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, WebSocketException
 from fastapi.exceptions import HTTPException
 from pydantic import UUID4
 
-from app.utils.sessions import Player
+from app.utils.player import Player
 
 
 class Broadcaster:
