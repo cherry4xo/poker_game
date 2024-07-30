@@ -2,7 +2,7 @@ import json
 from typing import Optional
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, WebSocket, Depends
+from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
 from fastapi.exceptions import WebSocketException
 from pydantic import UUID4
@@ -47,15 +47,19 @@ async def webscoket_endpoint(
     await websocket.accept()
     player = Player(uuid=user.uuid, name=user.username, websocket=websocket)
     await session.add_player(player=player)
-    while True:
-        data_json = await websocket.receive_json()
-        data = json.loads(data_json)
-        if data["type"] == "take_seat":
-            ans = await session.take_seat(user.uuid, seat_num=data["seat_num"])
-            await session.send_personal_message(user.uuid, ans)
-        if data["type"] == "start":
-            ans = await session.start_game()
-            await session.send_all_data(ans)
-        if data["type"] == "bet":
-            ans = await session.bet(user_id=user.uuid, value=data["value"])
-            await session.send_all_data(ans)
+    try:
+        while True:
+            data_json = await websocket.receive_json()
+            data = json.loads(data_json)
+            if data["type"] == "take_seat":
+                ans = await session.take_seat(user.uuid, seat_num=data["seat_num"])
+                await session.send_personal_message(user.uuid, ans)
+            if data["type"] == "start":
+                ans = await session.start_game()
+                await session.send_all_data(ans)
+            if data["type"] == "bet":
+                ans = await session.bet(user_id=user.uuid, value=data["value"])
+                await session.send_all_data(ans)
+    except WebSocketDisconnect:
+        await session.disconnect_player(player=player)
+        await session.remove_player(player.id)
