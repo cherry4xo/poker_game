@@ -252,8 +252,10 @@ class Session(Broadcaster):
             return False
         self.players.remove(player)
         await self.disconnect_player(player=player)
-        player_seat = self.seats.index(user_id)
-        seat_index = await self._get_next_busy_seat(user_id=user_id)
+        if user_id in self.seats:
+            player_seat = self.seats.index(user_id)
+            self.seats[player_seat] = None
+            seat_index = await self._get_next_busy_seat(user_id=user_id)
         if self.current_player == player_seat:
             self.current_player == seat_index
         if self.dealer == player_seat:
@@ -305,6 +307,9 @@ class Session(Broadcaster):
                 "type": "error",
                 "message": "this seat is already taken"
             }
+        if player_id in self.seats:
+            player_seat = self.seats.index(player_id)
+            self.seats[player_seat] = None
         self.seats[seat_num] = player_id
         await self.save()
         return {

@@ -21,7 +21,7 @@ class Broadcaster:
     async def connect_player(self, player: Player) -> None:
         data = {
             "type": "connect",
-            "player_data": player.__dict__
+            "player_data": player.dict
         }
         data_json = json.dumps(data, default=str)
         for player in self.players:
@@ -30,7 +30,7 @@ class Broadcaster:
     async def disconnect_player(self, player: Player) -> None:
         data = {
             "type": "disconnect",
-            "player_data": player.__dict__
+            "player_data": player.dict
         }
         data_json = json.dumps(data, default=str)
         for player in self.players:
