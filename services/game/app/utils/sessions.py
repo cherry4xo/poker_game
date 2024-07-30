@@ -212,7 +212,7 @@ class Session(Broadcaster):
         if len(self.players) < self.max_players:
             self.players.append(player)
             await self.save()
-            await self.connect_player(player)
+            await self.send_all_data(self.data)
             return True
         return False
     
@@ -251,7 +251,6 @@ class Session(Broadcaster):
         if player is None:
             return False
         self.players.remove(player)
-        await self.disconnect_player(player=player)
         if user_id in self.seats:
             player_seat = self.seats.index(user_id)
             self.seats[player_seat] = None
@@ -267,6 +266,7 @@ class Session(Broadcaster):
             if seat == user_id:
                 seat = None
         await self.save()
+        await self.send_all_data(self.data)
         return True
     
     # COMPLETE

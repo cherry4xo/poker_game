@@ -57,12 +57,13 @@ async def webscoket_endpoint(
             # data = json.loads(data_json)
             if data["type"] == "take_seat":
                 ans = await session.take_seat(user_id, seat_num=data["seat_num"])
-                await session.send_personal_message(user_id, ans)
+                # await session.send_personal_message(user_id, ans)
+                await session.send_all_data(session.data)
             if data["type"] == "start":
                 ans = await session.start_game()
-                await session.send_all_data(ans)
+                await session.send_all_data(session.data)
             if data["type"] == "bet":
                 ans = await session.bet(user_id=user_id, value=data["value"])
-                await session.send_all_data(ans)
+                await session.send_all_data(session.data)
     except WebSocketDisconnect:
         await session.remove_player(player.id)
