@@ -41,7 +41,7 @@ class Card:
     
 
 class Hand:
-    def __init__(self, cards):
+    def __init__(self, cards: List[Card] = []):
         self.cards: List[Card] = sorted(cards, key=lambda card: self.rank_value(card.rank))
         self.ranks = [card.rank for card in self.cards]
         self.suits = [card.suit for card in self.cards]

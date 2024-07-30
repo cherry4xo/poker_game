@@ -20,7 +20,7 @@ def init_middlewares(app: FastAPI):
 
 
 app = FastAPI(
-    root_path="/poker_auth/"
+    root_path="/poker_auth"
 )
 
 
