@@ -58,3 +58,4 @@ async def webscoket_endpoint(
             await session.send_all_data(ans)
         if data["type"] == "bet":
             ans = await session.bet(user_id=user.uuid, value=data["value"])
+            await session.send_all_data(ans)
