@@ -38,18 +38,18 @@ def register_db(app: FastAPI, db_url: str = None) -> None:
         add_exception_handlers=True
     )
 
-async def upgrade_db(app: FastAPI, db_url: str = None):
-    command = Command(tortoise_config=TORTOISE_ORM, app="models", location="./migrations")
-    print(TORTOISE_ORM)
-    if not os.path.exists("./migrations/models"):
-        await command.init_db(safe=True)
-    await command.init()
-    await command.migrate(str(uuid.uuid4()))
-    await command.upgrade(run_in_transaction=True)
+# async def upgrade_db(app: FastAPI, db_url: str = None):
+#     command = Command(tortoise_config=TORTOISE_ORM, app="models", location="./migrations")
+#     print(TORTOISE_ORM)
+#     if not os.path.exists("./migrations/models"):
+#         await command.init_db(safe=True)
+#     await command.init()
+#     await command.migrate(str(uuid.uuid4()))
+#     await command.upgrade(run_in_transaction=True)
 
 
 async def init(app: FastAPI):
-    await upgrade_db(app)
+    # await upgrade_db(app)
     register_db(app)
     logger.debug("Connected to db")
     await ping_redis_connection(r)
