@@ -17,7 +17,7 @@ reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=settings.LOGIN_URL,
 )
 refresh_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=settings.LOGIN_URL
+    tokenUrl=settings.REFRESH_URL
 )
 
 async def get_current_user(token: str = Security(reusable_oauth2)) -> Optional[User]:
