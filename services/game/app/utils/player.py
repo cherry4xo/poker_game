@@ -78,37 +78,37 @@ class Hand:
         else:
             return int(rank)
 
-    def is_straight(self):
-        values = [self.rank_value(rank) for rank in self.ranks]
+    def is_straight(self, ranks):
+        values = [self.rank_value(rank) for rank in ranks]
         return values == list(range(min(values), max(values) + 1))
 
-    def is_flush(self):
-        return len(self.suit_counts) == 1
+    def is_flush(self, suits):
+        return len(set(suits)) == 1
 
-    def is_four_of_a_kind(self):
-        return 4 in self.rank_counts.values()
+    def is_four_of_a_kind(self, rank_counts):
+        return 4 in rank_counts.values()
 
-    def is_full_house(self):
-        return 3 in self.rank_counts.values() and 2 in self.rank_counts.values()
+    def is_full_house(self, rank_counts):
+        return 3 in rank_counts.values() and 2 in rank_counts.values()
 
-    def is_three_of_a_kind(self):
-        return 3 in self.rank_counts.values()
+    def is_three_of_a_kind(self, rank_counts):
+        return 3 in rank_counts.values()
 
-    def is_two_pair(self):
-        return list(self.rank_counts.values()).count(2) == 2
+    def is_two_pair(self, rank_counts):
+        return list(rank_counts.values()).count(2) == 2
 
-    def is_pair(self):
-        return 2 in self.rank_counts.values()
-    
-    def get_cards_by_rank(self, rank):
-        return [card for card in self.cards if card.rank == rank]
+    def is_pair(self, rank_counts):
+        return 2 in rank_counts.values()
+
+    def get_cards_by_rank(self, cards, rank) -> List[Card]:
+        return [card for card in cards if card.rank == rank]
 
     def evaluate_hand(self, cards: List[Card]):
         ranks = [card.rank for card in cards]
         suits = [card.suit for card in cards]
         rank_counts = Counter(ranks)
 
-        if self.is_straight(ranks) and self.is_flush(suits) and ranks == ['10', 'jack', 'queen', 'king', 'ace']:
+        if self.is_straight(ranks) and self.is_flush(suits) and ranks == ['10', 'Jack', 'Queen', 'King', 'Ace']:
             return (9, [(card.rank, card.suit) for card in cards])  # Royal Flush
         elif self.is_straight(ranks) and self.is_flush(suits):
             return (8, [(card.rank, card.suit) for card in cards])  # Straight Flush
@@ -135,9 +135,11 @@ class Hand:
             pair_cards = [card for rank in pairs for card in self.get_cards_by_rank(cards, rank)]
             return (2, [(card.rank, card.suit) for card in pair_cards])  # Two Pair
         elif self.is_pair(rank_counts):
-            pair_rank = [rank for rank, count in rank_counts.items() if count == 2][0]
-            pair_cards = self.get_cards_by_rank(cards, pair_rank)
-            return (1, [(card.rank, card.suit) for card in pair_cards])  # Pair
+            pair_rank = [rank for rank, count in rank_counts.items() if count == 2]
+            if pair_rank:
+                pair_rank = pair_rank[0]
+                pair_cards = self.get_cards_by_rank(cards, pair_rank)
+                return (1, [(card.rank, card.suit) for card in pair_cards])  # Pair
         else:
             return (0, [(card.rank, card.suit) for card in cards])  # High Card
         
@@ -174,6 +176,7 @@ class PlayerStatus(Enum):
     PLAYING = 2
     STAYING = 3
     PASS = 4
+    ALL_IN = 5
 
 
 class Player:
@@ -198,19 +201,36 @@ class Player:
         return player
     
     async def _bet(self, value: float) -> Optional[bool]:
+        if self.status == PlayerStatus.ALL_IN:
+            return 0
         try:
-            self.balance -= value
-            self.currentbet += value
+            if self.balance < value:
+                delta = self.balance
+                self.balance = 0
+                self.status = PlayerStatus.ALL_IN
+            else:
+                delta = value
+                self.balance -= delta
+            self.currentbet += delta
             self.status = PlayerStatus.STAYING
-            return True
+            return delta
         except Exception:
-            return False
+            return None
         
     async def _call(self, bet: float) -> Optional[float]:
+        if self.status == PlayerStatus.ALL_IN:
+            return 0
         try:
             delta = bet - self.currentbet
-            self.balance -= delta
-            self.status = PlayerStatus.STAYING
+            if self.balance < delta:
+                delta = self.balance
+                self.currentbet += delta
+                self.balance = 0
+                self.status = PlayerStatus.ALL_IN
+            else:
+                delta = bet - self.currentbet
+                self.currentbet = bet
+                self.balance -= delta
             return delta
         except Exception:
             return None
@@ -223,13 +243,20 @@ class Player:
             return None
         
     async def _raise(self, value: float) -> Optional[bool]:
+        if self.status == PlayerStatus.ALL_IN:
+            return 0
         try:
-            self.balance -= value
-            self.currentbet += value
-            self.status = PlayerStatus.STAYING
-            return True
+            if self.balance < value:
+                delta = self.balance
+                self.balance = 0
+                self.status = PlayerStatus.ALL_IN
+            else:
+                delta = value
+                self.balance -= delta
+            self.currentbet += delta
+            return delta
         except Exception:
-            return False
+            return None
 
     @property
     def dict(self) -> dict:

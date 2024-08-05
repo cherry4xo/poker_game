@@ -329,11 +329,15 @@ class Session(Broadcaster):
         self.current_bet = 0.0
         self.status = SessionStatus.GAME
         self.stage = SessionStage.PREFLOP
+        self.board.cards.clear()
+        
         for _ in range(5):
             card = self.deck.deal_card()
             self.board.add_card(card)
 
         for player in self.players:
+            player.hand.cards.clear()
+            player.status = PlayerStatus.PLAYING
             for _ in range(2):
                 card = self.deck.deal_card()
                 player.hand.add_card(card)
@@ -363,18 +367,18 @@ class Session(Broadcaster):
     
     async def bet(self, player_id: UUID4, value: float) -> dict:
         await self.get_data()
-        user_seat = self._get_index_by_player(player_id=player_id)
+        user_seat = await self._get_index_by_player(player_id=player_id)
         if user_seat == -1 or user_seat != self.current_player:
             return {
                 "type": "error",
                 "message": "now is not this user move"
             }
         player = self.get_player(player_id=player_id)
-        player._bet(value)
-        self.total_bet += value
-        self.current_bet = value if self.current_bet < value else self.current_bet
+        total_value = await player._bet(value)
+        self.total_bet += total_value
+        self.current_bet += total_value
         await self.save()
-        next_player_index = self._get_next_busy_seat(player.id)
+        next_player_index = await self._get_next_busy_seat(player.id)
         self.current_player = next_player_index
         await self.save()
 
@@ -383,7 +387,204 @@ class Session(Broadcaster):
             "message": "user betted",
             "data": self.data
         }
-        
+    
+    async def call(self, player_id: UUID4) -> dict:
+        await self.get_data()
+        user_seat = await self._get_index_by_player(player_id=player_id)
+        if user_seat == -1 or user_seat != self.current_player:
+            return {
+                "type": "error",
+                "message": "now is not this user move"
+            }
+        player = self.get_player(player_id=player_id)
+        delta = await player._call(bet=self.current_bet)
+        self.total_bet += delta
+        await self.save()
+        next_player_index = await self._get_next_busy_seat(player.id)
+        self.current_player = next_player_index
+        await self.save()
+
+        return {
+            "type": "success",
+            "message": "user called",
+            "data": self.data
+        }
+    
+    async def raise_bet(self, player_id: UUID4, value: float) -> dict:
+        await self.get_data()
+        user_seat = await self._get_index_by_player(player_id=player_id)
+        if user_seat == -1 or user_seat != self.current_player:
+            return {
+                "type": "error",
+                "message": "now is not this user move"
+            }
+        player = self.get_player(player_id=player_id)
+        delta = await player._raise(value=value)
+        self.total_bet += delta
+        self.current_bet = player.currentbet
+        await self.save()
+        next_player_index = await self._get_next_busy_seat(player.id)
+        self.current_player = next_player_index
+        await self.save()
+
+        return {
+            "type": "success",
+            "message": "user raised",
+            "data": self.data
+        }
+    
+    async def pass_board(self, player_id: UUID4) -> dict:
+        await self.get_data()
+        user_seat = await self._get_index_by_player(player_id=player_id)
+        if user_seat == -1 or user_seat != self.current_player:
+            return {
+                "type": "error",
+                "message": "now is not this user move"
+            }
+        player = self.get_player(player_id=player_id)
+        await player._pass()
+        self.seats[user_seat] = None
+        await self.save()
+
+        return {
+            "type": "success",
+            "message": "user passed",
+            "data": self.data
+        }
+    
+    async def get_winners(self) -> List[int]:
+        best_hand = None
+        best_player = None
+
+        for index, player_id in enumerate(self.seats):
+            if player_id is None:
+                continue
+            player = self.get_player(player_id=player_id)
+            for card in self.board.cards:
+                player.hand.add_card(card=card)
+            player_hand = player.hand
+            hand_value = player_hand.evaluate()
+            if best_hand is None or hand_value[0] > best_hand[0]:
+                best_hand = hand_value
+                best_player = index
+            elif hand_value[0] == best_hand[0]:
+                for card1, card2 in zip(hand_value[1], best_hand[1]):
+                    rank_value1 = player_hand.rank_value(card1[0])
+                    rank_value2 = player_hand.rank_value(card2[0])
+                    if rank_value1 > rank_value2:
+                        best_hand = hand_value
+                        best_player = index
+                        break
+                    elif rank_value1 < rank_value2:
+                        break
+
+        winners = [best_player]
+        for index, player_id in enumerate(self.seats):
+            if player_id is None:
+                continue
+            player = self.get_player(player_id=player_id)
+            if index == best_player:
+                continue
+            player_hand = player.hand
+            hand_value = player_hand.evaluate()
+            if hand_value[0] == best_hand[0]:
+                is_tie = True
+                for card1, card2 in zip(hand_value[1], best_hand[1]):
+                    rank_value1 = player_hand.rank_value(card1[0])
+                    rank_value2 = player_hand.rank_value(card2[0])
+                    if rank_value1 != rank_value2:
+                        is_tie = False
+                        break
+                if is_tie:
+                    winners.append(index)
+
+        if len(winners) == 1:
+            return winners
+        else:
+            # Compare the highest cards of the tied players
+            highest_card_winners = []
+            highest_card_value = -1
+            for winner in winners:
+                player = await self._get_player_by_index(index=winner)
+                player_hand = player.hand
+                highest_card = max(player_hand.cards, key=lambda card: player_hand.rank_value(card.rank))
+                highest_card_rank_value = player_hand.rank_value(highest_card.rank)
+                if highest_card_rank_value > highest_card_value:
+                    highest_card_value = highest_card_rank_value
+                    highest_card_winners = [winner]
+                elif highest_card_rank_value == highest_card_value:
+                    highest_card_winners.append(winner)
+
+            if len(highest_card_winners) == 1:
+                return highest_card_winners
+            else:
+                # Compare the remaining cards of the tied players
+                final_winners = []
+                for winner in highest_card_winners:
+                    player = await self._get_player_by_index(index=winner)
+                    player_hand = player.hand
+                    remaining_cards = sorted(player_hand.cards, key=lambda card: player_hand.rank_value(card.rank), reverse=True)
+                    if not final_winners:
+                        final_winners.append(winner)
+                    else:
+                        current_winner_player = await self._get_player_by_index(index=final_winners[0])
+                        current_winner_hand = current_winner_player.hand
+                        current_winner_remaining_cards = sorted(current_winner_hand.cards, key=lambda card: current_winner_hand.rank_value(card.rank), reverse=True)
+                        for card1, card2 in zip(remaining_cards, current_winner_remaining_cards):
+                            rank_value1 = player_hand.rank_value(card1.rank)
+                            rank_value2 = current_winner_hand.rank_value(card2.rank)
+                            if rank_value1 > rank_value2:
+                                final_winners = [winner]
+                                break
+                            elif rank_value1 < rank_value2:
+                                break
+                        else:
+                            final_winners.append(winner)
+
+                return final_winners
+    
+    async def check(self, player_id: UUID4) -> dict:
+        await self.get_data()
+        user_seat = await self._get_index_by_player(player_id=player_id)
+        if user_seat == -1 or user_seat != self.current_player:
+            return {
+                "type": "error",
+                "message": "now is not this user move"
+            }
+        for seat in self.seats:
+            if seat is not None:
+                player = self.get_player(player_id=seat)
+                if player.currentbet != self.current_bet:
+                    if player.balance != 0:
+                        return {
+                            "type": "success",
+                            "message": "not_ready_for_check"
+                        }
+                    
+        for seat in self.seats:
+            if seat is not None:
+                player = self.get_player(player_id=seat)
+                player.currentbet = 0.0
+                
+        self.current_bet = 0.0
+        self.stage = SessionStage((self.stage.value + 1) % 5)
+        self.current_player = self.dealer
+        await self.save()
+
+        if self.stage == SessionStage.SHOWDOWN:
+            winners = await self.get_winners()
+
+            return {
+                "type": "success",
+                "message": "ends",
+                "winners": winners
+            }
+
+        return {
+            "type": "success",
+            "message": "checked",
+            "data": self.data
+        }
 
 
     # # TODO complete

@@ -47,7 +47,6 @@ async def webscoket_endpoint(
         )
     # if session.id != session_id:
     #     return RedirectResponse(f"{settings.WS_BASE_URL}/{session.id}")
-    print(username, session_id, websocket)
     await websocket.accept()
     player = Player(uuid=user_id, name=username, websocket=websocket)
     await session.add_player(player=player)
@@ -63,7 +62,29 @@ async def webscoket_endpoint(
                 ans = await session.start_game()
                 await session.send_all_data(session.data)
             if data["type"] == "bet":
-                ans = await session.bet(user_id=user_id, value=data["value"])
+                ans = await session.bet(player_id=user_id, value=data["value"])
                 await session.send_all_data(session.data)
+            if data["type"] == "call":
+                ans = await session.call(player_id=user_id)
+                await session.send_all_data(session.data)
+            if data["type"] == "raise":
+                ans = await session.raise_bet(player_id=user_id, value=data["value"])
+                await session.send_all_data(session.data)
+            if data["type"] == "pass":
+                ans = await session.pass_board(player_id=user_id)
+                await session.send_all_data(session.data)
+            if data["type"] == "check":
+                ans = await session.check(player_id=user_id)
+                if ans["message"] == "ends":
+                    data = {}
+                    data.update(session.data)
+                    data.update({"winners": ans["winners"]})
+                    await session.send_all_data(data)
+                else:
+                    await session.send_all_data(session.data)
+            if data["type"] == "root":
+                ans = await session.get_winners()
+                print(ans)
+                await session.send_all_data({"winners": ans})
     except WebSocketDisconnect:
         await session.remove_player(player.id)
