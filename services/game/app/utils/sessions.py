@@ -218,7 +218,7 @@ class Session(Broadcaster):
     
     def get_random_player(self) -> Player:
         player_id = choice(list(filter(partial(is_not, None), self.players)))
-        return self.get_player(player_id=player_id)
+        return self.get_player(player_id=player_id.id)
     
     async def _get_next_busy_seat(self, user_id: UUID4) -> int:
         data = await self.get_data()
