@@ -341,6 +341,7 @@ class Session(Broadcaster):
         next_player_id = self.seats[next_player_index]
         next_player = self.get_player(player_id=next_player_id)
         await next_player._bet(self.big_blind)
+        print("total_bet:", self.total_bet, "big_blind: ", self.big_blind)
         self.total_bet += self.big_blind
         self.current_bet = self.big_blind
         self.current_player = next_player_index
