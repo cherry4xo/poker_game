@@ -334,13 +334,13 @@ class Session(Broadcaster):
             player.hand.add_card(self.deck.deal_card())
 
         dealer = self.get_random_player()
-        dealer._bet(self.small_blind)
+        await dealer._bet(self.small_blind)
         self.total_bet = self.small_blind
         self.current_bet = self.small_blind
-        next_player_index = self._get_next_busy_seat(dealer.id)
+        next_player_index = await self._get_next_busy_seat(dealer.id)
         next_player_id = self.seats[next_player_index]
         next_player = self.get_player(player_id=next_player_id)
-        next_player._bet(self.big_blind)
+        await next_player._bet(self.big_blind)
         self.total_bet += self.big_blind
         self.current_bet = self.big_blind
         self.current_player = next_player_index
