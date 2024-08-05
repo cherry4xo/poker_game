@@ -13,7 +13,7 @@ from app import settings
 class Deck:
     def __init__(self) -> None:
         self.suits = ['hearts', 'diamonds', 'clubs', 'spades']
-        self.ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace']
+        self.ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace']
         self.cards = [Card(rank, suit) for suit in self.suits for rank in self.ranks]
         random.shuffle(self.cards)
 
