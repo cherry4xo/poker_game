@@ -197,14 +197,14 @@ class Player:
         player.status = PlayerStatus(data['status'])
         return player
     
-    async def _bet(self, value: float) -> Optional[float]:
+    async def _bet(self, value: float) -> Optional[bool]:
         try:
             self.balance -= value
             self.currentbet += value
             self.status = PlayerStatus.STAYING
-            return value
+            return True
         except Exception:
-            return None
+            return False
         
     async def _call(self, bet: float) -> Optional[float]:
         try:
@@ -222,13 +222,14 @@ class Player:
         except Exception:
             return None
         
-    async def _raise(self, value: float) -> Optional[float]:
+    async def _raise(self, value: float) -> Optional[bool]:
         try:
             self.balance -= value
             self.currentbet += value
             self.status = PlayerStatus.STAYING
+            return True
         except Exception:
-            return None
+            return False
 
     @property
     def dict(self) -> dict:
