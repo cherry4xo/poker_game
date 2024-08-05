@@ -221,13 +221,13 @@ class Session(Broadcaster):
         return self.get_player(player_id=player_id.id)
     
     async def _get_next_busy_seat(self, user_id: UUID4) -> int:
-        data = await self.get_data()
-        player_seat = data["seats"].index(str(user_id))
-        seat_index = (player_seat + 1) % data["max_players"]
-        next_player_seat = data["seats"][seat_index]
+        await self.get_data()
+        player_seat = self.seats.index(user_id)
+        seat_index = (player_seat + 1) % self.max_players
+        next_player_seat = self.seats[seat_index]
         while next_player_seat is None:
-            seat_index = (seat_index + 1) % data["max_players"]
-            next_player_seat = data["seats"][seat_index]
+            seat_index = (seat_index + 1) % self.max_players
+            next_player_seat = self.seats[seat_index]
         return seat_index
     
     async def _get_player_by_index(self, index: int) -> Player:
@@ -330,21 +330,26 @@ class Session(Broadcaster):
         self.status = SessionStatus.GAME
         self.stage = SessionStage.PREFLOP
         for _ in range(5):
-            self.board.add_card(self.deck.deal_card())
+            card = self.deck.deal_card()
+            self.board.add_card(card)
 
         for player in self.players:
-            player.hand.add_card(self.deck.deal_card())
+            for _ in range(2):
+                card = self.deck.deal_card()
+                player.hand.add_card(card)
+
+        await self.save()
 
         dealer = self.get_random_player()
+        self.dealer = await self._get_index_by_player(player_id=dealer.id)
         await dealer._bet(self.small_blind)
         self.total_bet += self.small_blind
         self.current_bet = self.small_blind
+        await self.save()
         next_player_index = await self._get_next_busy_seat(dealer.id)
         next_player_id = self.seats[next_player_index]
         next_player = self.get_player(player_id=next_player_id)
         await next_player._bet(self.big_blind)
-        print("total_bet: ", self.total_bet, "big_blind: ", self.big_blind)
-        print("current_bet: ", self.current_bet, "small_blind: ", self.small_blind)
         self.total_bet += self.big_blind
         self.current_bet = self.big_blind
         self.current_player = next_player_index
@@ -368,6 +373,7 @@ class Session(Broadcaster):
         player._bet(value)
         self.total_bet += value
         self.current_bet = value if self.current_bet < value else self.current_bet
+        await self.save()
         next_player_index = self._get_next_busy_seat(player.id)
         self.current_player = next_player_index
         await self.save()
