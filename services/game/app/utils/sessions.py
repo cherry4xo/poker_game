@@ -335,7 +335,7 @@ class Session(Broadcaster):
 
         dealer = self.get_random_player()
         dealer._bet(self.small_blind)
-        self.total_bet += self.small_blind
+        self.total_bet = self.small_blind
         self.current_bet = self.small_blind
         next_player_index = self._get_next_busy_seat(dealer.id)
         next_player_id = self.seats[next_player_index]
