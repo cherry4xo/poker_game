@@ -325,6 +325,10 @@ class Session(Broadcaster):
                 "message": "not enough players to start game"
             }
         
+        self.total_bet = 0.0
+        self.current_bet = 0.0
+        print("total_bet: ", self.total_bet, "big_blind: ", self.big_blind)
+        print("current_bet: ", self.current_bet, "small_blind: ", self.small_blind)
         self.status = SessionStatus.GAME
         self.stage = SessionStage.PREFLOP
         for _ in range(5):
@@ -335,13 +339,12 @@ class Session(Broadcaster):
 
         dealer = self.get_random_player()
         await dealer._bet(self.small_blind)
-        self.total_bet = self.small_blind
+        self.total_bet += self.small_blind
         self.current_bet = self.small_blind
         next_player_index = await self._get_next_busy_seat(dealer.id)
         next_player_id = self.seats[next_player_index]
         next_player = self.get_player(player_id=next_player_id)
         await next_player._bet(self.big_blind)
-        print("total_bet:", self.total_bet, "big_blind: ", self.big_blind)
         self.total_bet += self.big_blind
         self.current_bet = self.big_blind
         self.current_player = next_player_index
