@@ -806,6 +806,9 @@ class SessionsContainer:
         """        
         return await Session.get_session_by_uuid(session_id=uuid)
     
+    async def get_session_by_user_id(self, uuid: UUID4) -> Optional[Session]:
+        return await self.find_user_session(uuid=uuid)
+    
     # COMPLETE
     async def add_user(self, user_id: UUID4, session_id: UUID4) -> bool:
         """adds user uuid into Session object with <session_id> uuid

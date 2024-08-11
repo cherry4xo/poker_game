@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
-from fastapi.exceptions import WebSocketException
+from fastapi.exceptions import WebSocketException, HTTPException
 from pydantic import UUID4
 
 from app.models import User
@@ -29,27 +29,54 @@ async def create_session(
         return SessionCreateOut(uuid=session.id, players_id_list=session.players)
     session = await sessions_container.create_session()
     return SessionCreateOut(uuid=session.id, players_id_list=[player.id for player in session.players])
+
+
+# @router.post("/join/{session_id}", status_code=200)
+# async def player_join_game(
+#     session_id: UUID4,
+#     user: User = Depends(decode_jwt)
+# ):
+#     session: Optional[Session] = await sessions_container.find_user_session(uuid=user.uuid)
+#     if session is not None:
+#         return session.id
+#     session: Optional[Session] = await sessions_container.get_session(session_id=session_id)
+#     if session is None:
+#         raise HTTPException(
+#             status_code=404,
+#             detail="The session with this id does not exist"
+#         )
+#     player = Player(uuid=user.uuid, name=user.username, websocket=websocket)
+#     await session.add_player(player=player)
     
 
-@router.websocket("/{session_id}/{username}")
+@router.websocket("/{session_id}/{token}")
 async def webscoket_endpoint(
     session_id: UUID4, 
-    username: str,
-    websocket: WebSocket
+    token: str,
+    websocket: WebSocket,
     # user: User = Depends(decode_jwt)
 ):
-    user_id = uuid4()
+    await websocket.accept()
+    user: User = await decode_jwt(token=token)
+    user_id = user.uuid
+    username = user.username
+    user_session = await sessions_container.get_session_by_user_id(uuid=user_id)
+    if (user_session is not None) and (user_session.id != session_id):
+        await websocket.close()
+        return RedirectResponse(f"{settings.WS_BASE_URL}/{user_session.id}/{token}")
     session: Optional[Session] = sessions_container.get_session(session_id=session_id)
     if session is None:
         raise WebSocketException(
             code=1007,
             reason="The session with this uuid does not exist"
         )
-    # if session.id != session_id:
-    #     return RedirectResponse(f"{settings.WS_BASE_URL}/{session.id}")
-    await websocket.accept()
-    player = Player(uuid=user_id, name=username, websocket=websocket)
-    await session.add_player(player=player)
+    player = session.get_player(player_id=user_id)
+    if player is not None:
+        player.websocket = websocket
+        await session.send_all_data(session.data)
+    else:
+        player = Player(uuid=user_id, name=username, websocket=websocket)
+        await session.add_player(player=player)
     try:
         while True:
             data = await websocket.receive_json()
@@ -84,7 +111,13 @@ async def webscoket_endpoint(
                     await session.send_all_data(session.data)
             if data["type"] == "root":
                 ans = await session.get_winners()
-                print(ans)
                 await session.send_all_data({"winners": ans})
+            if data["type"] == "exit":
+                ans = await session.remove_player(player.id)
+                await session.send_all_data(session.data)
+                await websocket.close(code=1000)
+                break
     except WebSocketDisconnect:
-        await session.remove_player(player.id)
+        # await session.remove_player(player.id)
+        player.websocket = None
+        await session.send_all_data(session.data)

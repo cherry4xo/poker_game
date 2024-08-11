@@ -186,7 +186,7 @@ class Player:
         self.balance = balance or settings.DEFAULT_START_BALANCE
         self.hand: Hand = Hand()
         self.currentbet = 0
-        self.websocket = websocket
+        self.websocket: Optional[WebSocket] = websocket
         self.status = PlayerStatus.NOT_READY
 
     @classmethod

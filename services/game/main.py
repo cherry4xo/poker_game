@@ -2,6 +2,7 @@ import uvicorn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from contextlib import asynccontextmanager
 
 from app.db import init
@@ -17,10 +18,13 @@ def init_middlewares(app: FastAPI):
         allow_methods=settings.CORS_ALLOW_METHODS,
         allow_headers=settings.CORS_ALLOW_HEADERS
     )
+    # app.add_middleware(
+    #     HTTPSRedirectMiddleware
+    # )
 
 
 app = FastAPI(
-    root_path="/poker_game"
+    # root_path="/poker_game"
 )
 
 
