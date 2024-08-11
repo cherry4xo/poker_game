@@ -1,6 +1,6 @@
 import axios, { Method } from 'axios';
 import { useToast } from '@chakra-ui/react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { ISignup } from '@/utils/types';
 
 const api = axios.create({
@@ -50,6 +50,26 @@ export function useApi() {
         }
     }, []);
 
+    const signin = useCallback(async (payload: ISignup) => await exec({
+        method: 'post',
+        url: '/poker_auth/login/access-token',
+        body: new URLSearchParams(payload as any).toString(),
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        onSuccess(data) {
+            localStorage.setItem(localStorageName, JSON.stringify(data));
+            window.location.href = '/';
+
+            toast({
+                status: 'success',
+                duration: 3000,
+                title: 'Успешно',
+                description: 'Вы вошли!'
+            });
+        }
+    }), []);
+
     return {
         authed: !!getAccessToken,
         user: getUserData,
@@ -62,37 +82,21 @@ export function useApi() {
             }
         }),
 
-        signin: async (payload: ISignup) => await exec({
-            method: 'post',
-            url: '/poker_auth/login/access-token',
-            body: new URLSearchParams(payload as any).toString(),
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            onSuccess(data) {
-                localStorage.setItem(localStorageName, JSON.stringify(data));
-                window.location.href = '/';
-
-                toast({
-                    status: 'success',
-                    duration: 3000,
-                    title: 'Успешно',
-                    description: 'Вы вошли!'
-                });
-            }
-        }),
+        signin,
 
         signup: async (payload: ISignup) => await exec({
             method: 'post',
             url: '/poker_users/users',
             body: payload,
-            onSuccess() {
-                toast({
-                    status: 'success',
-                    duration: 3000,
-                    title: 'Успешно',
-                    description: 'Вы зарегистрировались!'
-                });
+            async onSuccess() {
+                await signin({ username: payload.email, password: payload.password, email: '' });
+
+                // toast({
+                //     status: 'success',
+                //     duration: 3000,
+                //     title: 'Успешно',
+                //     description: 'Вы зарегистрировались!'
+                // });
             }
         }),
 
