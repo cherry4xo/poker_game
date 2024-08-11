@@ -12,8 +12,8 @@ const localStorageName = 'poker_auth';
 export function useApi() {
     const toast = useToast();
 
-    const getAccessToken = useMemo(() => JSON.parse(localStorage.getItem(localStorageName) ?? '{}')?.access_token, []);
-    const getUserData = useMemo(() => JSON.parse(localStorage.getItem('poker_user') ?? '{}'), []);
+    const getAccessToken = JSON.parse(localStorage.getItem(localStorageName) ?? '{}')?.access_token;
+    const getUserData = JSON.parse(localStorage.getItem('poker_user') ?? '{}');
 
     const exec = useCallback(async (
         { method, url, body = {}, headers = {}, onSuccess }: { method: Method, url: string, body?: any, headers?: any, onSuccess?: (data: any) => void }
