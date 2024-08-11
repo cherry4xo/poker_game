@@ -180,7 +180,7 @@ class PlayerStatus(Enum):
 
 
 class Player:
-    def __init__(self, uuid: UUID4, websocket: WebSocket, name: str, balance: float = None) -> None:
+    def __init__(self, uuid: UUID4, name: str, websocket: Optional[WebSocket] = None, balance: float = None) -> None:
         self.id = uuid
         self.name = name
         self.balance = balance or settings.DEFAULT_START_BALANCE

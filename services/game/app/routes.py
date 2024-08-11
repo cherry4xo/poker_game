@@ -31,27 +31,26 @@ async def create_session(
     return SessionCreateOut(uuid=session.id, players_id_list=[player.id for player in session.players])
 
 
-# @router.post("/join/{session_id}", status_code=200)
-# async def player_join_game(
-#     session_id: UUID4,
-#     user: User = Depends(decode_jwt)
-# ):
-#     session: Optional[Session] = await sessions_container.find_user_session(uuid=user.uuid)
-#     if session is not None:
-#         return session.id
-#     session: Optional[Session] = await sessions_container.get_session(session_id=session_id)
-#     if session is None:
-#         raise HTTPException(
-#             status_code=404,
-#             detail="The session with this id does not exist"
-#         )
-#     player = Player(uuid=user.uuid, name=user.username, websocket=websocket)
-#     await session.add_player(player=player)
+@router.post("/join/{session_id}", status_code=200)
+async def player_join_game(
+    session_id: UUID4,
+    user: User = Depends(decode_jwt)
+):
+    session: Optional[Session] = await sessions_container.find_user_session(uuid=user.uuid)
+    if session is not None:
+        return session.id
+    session: Optional[Session] = sessions_container.get_session(session_id=session_id)
+    if session is None:
+        raise HTTPException(
+            status_code=404,
+            detail="The session with this id does not exist"
+        )
+    player = Player(uuid=user.uuid, name=user.username, websocket=None)
+    await session.add_player(player=player)
     
 
-@router.websocket("/{session_id}/{token}")
+@router.websocket("/{token}")
 async def webscoket_endpoint(
-    session_id: UUID4, 
     token: str,
     websocket: WebSocket,
     # user: User = Depends(decode_jwt)
@@ -60,11 +59,10 @@ async def webscoket_endpoint(
     user: User = await decode_jwt(token=token)
     user_id = user.uuid
     username = user.username
-    user_session = await sessions_container.get_session_by_user_id(uuid=user_id)
-    if (user_session is not None) and (user_session.id != session_id):
-        await websocket.close()
-        return RedirectResponse(f"{settings.WS_BASE_URL}/{user_session.id}/{token}")
-    session: Optional[Session] = sessions_container.get_session(session_id=session_id)
+    session = await sessions_container.get_session_by_user_id(uuid=user_id)
+    # if (user_session is not None) and (user_session.id != session_id):
+    #     await websocket.close()
+    #     return RedirectResponse(f"{settings.WS_BASE_URL}/{user_session.id}/{token}")
     if session is None:
         raise WebSocketException(
             code=1007,
