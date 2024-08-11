@@ -7,6 +7,7 @@ import { PlayerStatus, SessionStatus } from '@/utils/enums';
 import { useContext } from 'react';
 import { SocketContext } from '@/app/SocketContext';
 import { useApi } from '@/hooks';
+// @ts-ignore
 import * as deck from '@letele/playing-cards';
 
 const PlayerLabelStyles: FlexProps = {

@@ -34,6 +34,7 @@
     "eslint-config-next": "14.2.5",
     "eslint-plugin-react": "^7.34.4",
     "eslint-plugin-react-hooks": "^4.6.2",
+    "playing-cards": "link:@types/@letele/playing-cards",
     "typescript": "^5.5.3"
   }
 }

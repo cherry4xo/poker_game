@@ -78,6 +78,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ^4.6.2
         version: 4.6.2(eslint@8.57.0)
+      playing-cards:
+        specifier: link:@types/@letele/playing-cards
+        version: link:@types/@letele/playing-cards
       typescript:
         specifier: ^5.5.3
         version: 5.5.3
