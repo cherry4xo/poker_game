@@ -1,10 +1,12 @@
-import { Box, Flex, FlexProps, HStack, Text } from '@chakra-ui/react';
+import { Box, Flex, FlexProps, Text } from '@chakra-ui/react';
 import { positions } from '@/utils/misc';
 import { Controls } from '@/components/Common';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
 import { SessionStatus } from '@/utils/enums';
-import { useWs } from '@/hooks';
+import { useContext } from 'react';
+import { SocketContext } from '@/app/SocketContext';
+import { useApi } from '@/hooks';
 
 // const PlayerLabelStyles: FlexProps = {
 //     w: 'max-content',
@@ -17,15 +19,19 @@ import { useWs } from '@/hooks';
 
 export default function Game() {
     const game = useSelector(state => state.game);
-    const { take_seat } = useWs();
+    const ws = useContext(SocketContext);
+
+    const { user } = useApi();
+    const { device } = useSelector(state => state.misc);
 
     return <Flex pos='relative' w='60vw' h='40vh' border='2px solid green' borderRadius='full' justify='center' align='center'>
-        <Text as='pre' fontSize='12px' pos='fixed' top={0} left={0} opacity={.5}>{JSON.stringify(game, null, 2)}</Text>
+        {device !== 'phone' && <Text as='pre' fontSize='12px' pos='fixed' top={0} left={0} opacity={.5}>{JSON.stringify(game, null, 2)}</Text>}
+        <Text fontSize='12px' pos='fixed' top={0} right={0} opacity={.5}>{user.uuid}</Text>
         {game.players.filter(p => p).length > 1 && <Box pos='fixed' bottom='30px' right='30px'><Controls /></Box>}
 
         {Array.from({ length: game.seats.length }, (_: any, i: number) => {
             const seatTaken = !!game.seats[i];
-            const player: IPlayer | null = game.players[i];
+            // const player: IPlayer | null = game.players[i];
 
             let SeatStyles: FlexProps = {
                 border: '2px solid gray',
@@ -34,7 +40,7 @@ export default function Game() {
                     borderColor: 'blue'
                 },
                 onClick: () => {
-                    take_seat(i);
+                    ws.current.send(JSON.stringify({ type: 'take_seat', seat_num: i }));
                 }
             };
 

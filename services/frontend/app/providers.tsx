@@ -1,8 +1,9 @@
 'use client';
 import { CacheProvider } from '@chakra-ui/next-js';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
-import { Provider } from "@/redux/provider";
+import { Provider } from '@/redux/provider';
 import '@fontsource-variable/manrope';
+import { SocketContextProvider } from '@/app/SocketContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
     return <Provider>
@@ -17,8 +18,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     }
                 }
             })}>
-                {children}
+                <SocketContextProvider>
+                    {children}
+                </SocketContextProvider>
             </ChakraProvider>
         </CacheProvider>
-    </Provider>
+    </Provider>;
 }

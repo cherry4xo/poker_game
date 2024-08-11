@@ -37,6 +37,15 @@ export interface IPlayer {
     status: PlayerStatus;
 }
 
+// export interface IUser {
+//     uuid: string;
+//     username: string;
+//     registration_date: string;
+//     is_admin: boolean;
+//     is_confirmed: boolean;
+//     email: string;
+// }
+
 export interface ISignup {
     username: string;
     email: string;

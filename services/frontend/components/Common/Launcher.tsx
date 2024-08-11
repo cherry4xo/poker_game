@@ -4,10 +4,12 @@ import { setDevice } from "@/redux/miscSlice";
 import { motion } from 'framer-motion';
 import { ease } from "@/utils/misc";
 import { useEffect } from "react";
+import { useApi } from '@/hooks';
 
 export function Launcher() {
     const dispatch = useDispatch();
     const { device } = useSelector(({ misc }) => misc);
+    const { validate, authed } = useApi();
 
     useEffect(() => {
         function launch() {
@@ -22,6 +24,8 @@ export function Launcher() {
 
         launch();
         window.onresize = launch;
+
+        if (authed) validate();
     }, [dispatch]);
 
     return <>

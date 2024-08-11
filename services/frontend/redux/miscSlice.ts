@@ -6,7 +6,7 @@ interface MiscState {
 }
 
 const initialState: MiscState = {
-    device: null
+    device: null,
 };
 
 export const miscSlice = createSlice({
