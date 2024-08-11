@@ -1,17 +1,19 @@
-import { Button, VStack } from '@chakra-ui/react';
+import { Button, Text, VStack } from '@chakra-ui/react';
 import Link from 'next/link';
 import { useApi } from '@/hooks';
 
 export default function Home() {
-    const { authed, create } = useApi();
+    const { authed, create, user } = useApi();
 
     return <VStack w='100%' justify='center'>
         {authed
             ? <>
-                <Button onClick={create}>create game</Button>
+                <Text>Вы авторизованы как {user.email}</Text>
+                <Button onClick={create}>Создать игру</Button>
             </>
             : <>
-                <Link href='/auth'><Button>auth</Button></Link>
+                <Text>Вы не вошли в аккаунт</Text>
+                <Link href='/auth'><Button>Войти/зарегистрироваться</Button></Link>
             </>}
     </VStack>;
 }

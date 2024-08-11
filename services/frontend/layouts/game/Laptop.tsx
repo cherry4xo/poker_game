@@ -1,12 +1,13 @@
-import { Box, Flex, FlexProps, HStack, Text } from '@chakra-ui/react';
+import { Box, Flex, FlexProps, HStack, Text, VStack } from '@chakra-ui/react';
 import { positions } from '@/utils/misc';
-import { Controls } from '@/components/Common';
+import { Controls, Header } from '@/components/Common';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
 import { PlayerStatus, SessionStatus } from '@/utils/enums';
 import { useContext } from 'react';
 import { SocketContext } from '@/app/SocketContext';
 import { useApi } from '@/hooks';
+import * as deck from '@letele/playing-cards';
 
 const PlayerLabelStyles: FlexProps = {
     w: 'max-content',
@@ -17,6 +18,14 @@ const PlayerLabelStyles: FlexProps = {
     align: 'center'
 };
 
+function Card({ data }: { data: { rank: string, suit: string } }) {
+    const rank = !isNaN(parseInt(data.rank)) ? data.rank : data.rank[0].toUpperCase();
+    const suit = data.suit[0].toUpperCase();
+
+    const TheCard = deck[`${suit}${rank}`] ?? deck.B2;
+    return <TheCard style={{ width: '100%', height: '100%' }} />;
+}
+
 export default function Game() {
     const game = useSelector(state => state.game);
     const ws = useContext(SocketContext);
@@ -25,8 +34,9 @@ export default function Game() {
     const { device } = useSelector(state => state.misc);
 
     return <Flex pos='relative' w='60vw' h='40vh' border='2px solid green' borderRadius='full' justify='center' align='center'>
-        {device !== 'phone' && <Text as='pre' fontSize='12px' pos='fixed' top={0} left={0} opacity={.5}>{JSON.stringify(game, null, 2)}</Text>}
-        <Text fontSize='12px' pos='fixed' top={0} right={0} opacity={.5}>{user.uuid}</Text>
+        <Box w='100%' pos='fixed' top={0} left={0} p='20px' opacity={.75}><Header /></Box>
+        {/*{device !== 'phone' && <Text as='pre' fontSize='12px' pos='fixed' top={0} left={0} opacity={.5}>{JSON.stringify(game, null, 2)}</Text>}*/}
+        {/*<Text fontSize='12px' pos='fixed' top={0} right={0} opacity={.5}>{user.uuid}</Text>*/}
         {game.players.filter(p => p).length > 1 && <Box pos='fixed' bottom='30px' right='30px'><Controls /></Box>}
 
         {Array.from({ length: game.seats.length }, (_: any, i: number) => {
@@ -66,20 +76,28 @@ export default function Game() {
                 <Text>{i}</Text>
 
                 <HStack h='30px' spacing='4px' pos='absolute' bottom='-40px' left='-30px'>
-                    {player && (
-                        game.status !== SessionStatus.LOBBY
+                    {player && <>
+                        <Flex {...PlayerLabelStyles} bg='gray'>{player.name}</Flex>
+
+                        {game.status !== SessionStatus.LOBBY
                             ? (player.status !== PlayerStatus.PASS
                                 ? <>
                                     <Flex {...PlayerLabelStyles} bg='teal'>{player.currentbet}$</Flex>
                                     {game.dealer === i && <Flex {...PlayerLabelStyles} bg='white' color='black'>D</Flex>}
                                 </>
                                 : <Flex {...PlayerLabelStyles} bg='whiteAlpha.500'>passed</Flex>)
-                            : <Flex {...PlayerLabelStyles} bg='orange'>bal: {player.balance}$</Flex>
-                    )}
+                            : <Flex {...PlayerLabelStyles} bg='orange'>bal: {player.balance}$</Flex>}
+                    </>}
                 </HStack>
             </Flex>;
         })}
 
-        <Text>{game.total_bet}$</Text>
+        <VStack w='100%'>
+            <HStack spacing='10px' h='40px'>
+                {game.board.cards.map((card: any, i: number) => <Card key={i} data={card} />)}
+            </HStack>
+
+            <Text>{game.total_bet}$</Text>
+        </VStack>
     </Flex>;
 }
