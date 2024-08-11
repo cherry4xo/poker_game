@@ -26,7 +26,7 @@ async def create_session(
 ):
     session: Optional[Session] = await sessions_container.find_user_session(uuid=user.uuid)
     if session is not None:
-        return SessionCreateOut(uuid=session.id, players_id_list=session.players)
+        return SessionCreateOut(uuid=session.id, players_id_list=[player.dict for player in session.players])
     session = await sessions_container.create_session()
     return SessionCreateOut(uuid=session.id, players_id_list=[player.id for player in session.players])
 
@@ -83,22 +83,22 @@ async def webscoket_endpoint(
                 ans = await session.take_seat(user_id, seat_num=data["seat_num"])
                 # await session.send_personal_message(user_id, ans)
                 await session.send_all_data(session.data)
-            if data["type"] == "start":
+            elif data["type"] == "start":
                 ans = await session.start_game()
                 await session.send_all_data(session.data)
-            if data["type"] == "bet":
+            elif data["type"] == "bet":
                 ans = await session.bet(player_id=user_id, value=data["value"])
                 await session.send_all_data(session.data)
-            if data["type"] == "call":
+            elif data["type"] == "call":
                 ans = await session.call(player_id=user_id)
                 await session.send_all_data(session.data)
-            if data["type"] == "raise":
+            elif data["type"] == "raise":
                 ans = await session.raise_bet(player_id=user_id, value=data["value"])
                 await session.send_all_data(session.data)
-            if data["type"] == "pass":
+            elif data["type"] == "pass":
                 ans = await session.pass_board(player_id=user_id)
                 await session.send_all_data(session.data)
-            if data["type"] == "check":
+            elif data["type"] == "check":
                 ans = await session.check(player_id=user_id)
                 if ans["message"] == "ends":
                     data = {}
@@ -107,10 +107,10 @@ async def webscoket_endpoint(
                     await session.send_all_data(data)
                 else:
                     await session.send_all_data(session.data)
-            if data["type"] == "root":
+            elif data["type"] == "root":
                 ans = await session.get_winners()
                 await session.send_all_data({"winners": ans})
-            if data["type"] == "exit":
+            elif data["type"] == "exit":
                 ans = await session.remove_player(player.id)
                 await session.send_all_data(session.data)
                 await websocket.close(code=1000)
