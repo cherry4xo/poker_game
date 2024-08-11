@@ -1,21 +1,21 @@
-import { Box, Flex, FlexProps, Text } from '@chakra-ui/react';
+import { Box, Flex, FlexProps, HStack, Text } from '@chakra-ui/react';
 import { positions } from '@/utils/misc';
 import { Controls } from '@/components/Common';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
-import { SessionStatus } from '@/utils/enums';
+import { PlayerStatus, SessionStatus } from '@/utils/enums';
 import { useContext } from 'react';
 import { SocketContext } from '@/app/SocketContext';
 import { useApi } from '@/hooks';
 
-// const PlayerLabelStyles: FlexProps = {
-//     w: 'max-content',
-//     h: '100%',
-//     px: '10px',
-//     rounded: '200px',
-//     justify: 'center',
-//     align: 'center'
-// };
+const PlayerLabelStyles: FlexProps = {
+    w: 'max-content',
+    h: '100%',
+    px: '10px',
+    rounded: '200px',
+    justify: 'center',
+    align: 'center'
+};
 
 export default function Game() {
     const game = useSelector(state => state.game);
@@ -31,7 +31,7 @@ export default function Game() {
 
         {Array.from({ length: game.seats.length }, (_: any, i: number) => {
             const seatTaken = !!game.seats[i];
-            // const player: IPlayer | null = game.players[i];
+            const player: IPlayer | undefined = game.players.find((p: IPlayer) => p.id === game.seats[i]);
 
             let SeatStyles: FlexProps = {
                 border: '2px solid gray',
@@ -65,18 +65,18 @@ export default function Game() {
             >
                 <Text>{i}</Text>
 
-                {/*<HStack h='30px' spacing='4px' pos='absolute' bottom='-40px' left='-30px'>*/}
-                {/*    {player && (*/}
-                {/*        game.status !== SessionStatus.LOBBY*/}
-                {/*            ? (player.status !== PlayerStatus.PASS*/}
-                {/*                ? <>*/}
-                {/*                    <Flex {...PlayerLabelStyles} bg='teal'>{player.currentbet}$</Flex>*/}
-                {/*                    {game.dealer === i && <Flex {...PlayerLabelStyles} bg='white' color='black'>D</Flex>}*/}
-                {/*                </>*/}
-                {/*                : <Flex {...PlayerLabelStyles} bg='whiteAlpha.500'>passed</Flex>)*/}
-                {/*            : <Flex {...PlayerLabelStyles} bg='orange'>bal: {player.balance}$</Flex>*/}
-                {/*    )}*/}
-                {/*</HStack>*/}
+                <HStack h='30px' spacing='4px' pos='absolute' bottom='-40px' left='-30px'>
+                    {player && (
+                        game.status !== SessionStatus.LOBBY
+                            ? (player.status !== PlayerStatus.PASS
+                                ? <>
+                                    <Flex {...PlayerLabelStyles} bg='teal'>{player.currentbet}$</Flex>
+                                    {game.dealer === i && <Flex {...PlayerLabelStyles} bg='white' color='black'>D</Flex>}
+                                </>
+                                : <Flex {...PlayerLabelStyles} bg='whiteAlpha.500'>passed</Flex>)
+                            : <Flex {...PlayerLabelStyles} bg='orange'>bal: {player.balance}$</Flex>
+                    )}
+                </HStack>
             </Flex>;
         })}
 

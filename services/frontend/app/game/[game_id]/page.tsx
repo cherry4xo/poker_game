@@ -26,6 +26,7 @@ export default function Game({ params: { game_id } }: { params: { game_id: strin
 
         socket.onmessage = e => {
             const data = JSON.parse(JSON.parse(e.data));
+            console.log(data);
             dispatch(setGameState(data));
         };
 
