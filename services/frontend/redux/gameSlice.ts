@@ -9,6 +9,7 @@ const initialState: IGame = {
     "seats": [
         null, null, null, null
     ],
+    "owner": "me",
     "small_blind": 10,
     "big_blind": 20,
     "max_players": 4,
