@@ -82,17 +82,19 @@ export function useApi() {
         deleteAuth().then(() => window.location.href = '/');
     }, []);
 
+    const join = useCallback(async (game_id: string) => await exec({
+        method: 'post',
+        url: `/poker_game/game/join/${game_id}`,
+        onSuccess() {
+            window.location.href = '/game';
+        }
+    }), []);
+
     const create = useCallback(async () => await exec({
         method: 'post',
         url: '/poker_game/game/create',
         async onSuccess(data) {
-            await exec({
-                method: 'post',
-                url: `/poker_game/game/join/${data.uuid}`,
-                onSuccess() {
-                    window.location.href = '/game';
-                }
-            });
+            join(data.uuid);
         }
     }), []);
 
@@ -127,6 +129,7 @@ export function useApi() {
 
         signout,
         create,
+        join,
 
         connect: async () => {
             if (ws.current) {
