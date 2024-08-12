@@ -27,7 +27,7 @@ async def create_session(
     session: Optional[Session] = await sessions_container.find_user_session(uuid=user.uuid)
     if session is not None:
         return SessionCreateOut(uuid=session.id, players_id_list=[player.dict for player in session.players])
-    session = await sessions_container.create_session()
+    session = await sessions_container.create_session(max_players=settings.DEFAULT_MAX_PLAYERS, owner=user.uuid)
     return SessionCreateOut(uuid=session.id, players_id_list=[player.id for player in session.players])
 
 

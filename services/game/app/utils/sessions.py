@@ -5,6 +5,7 @@ from operator import is_not
 from functools import partial
 from enum import Enum
 from uuid import uuid4, UUID
+from copy import deepcopy
 
 from fastapi import WebSocket
 from pydantic import UUID4
@@ -135,13 +136,14 @@ class Session(Broadcaster):
         Returns:
             Session: Session object
         """        
+        uuid = uuid4() or uuid
         session = cls(
             uuid=uuid,
             max_players=max_players,
             small_blind=small_blind,
             big_blind=big_blind,
-            players=players,
-            seats=seats,
+            players=deepcopy(players),
+            seats=seats.copy(),
             status=status,
             stage=stage,
             board=board,
@@ -152,7 +154,7 @@ class Session(Broadcaster):
             owner=owner,
             data=data,
         )
-        await session.set_data(data=session.data)
+        await session.save()
         return session
 
     # COMPLETE
@@ -746,7 +748,7 @@ class SessionsContainer:
         return None
 
     # COMPLETE
-    async def create_session(self, max_players: int = None) -> Session:
+    async def create_session(self, max_players: int = None, owner: UUID4 = None) -> Session:
         """creates session and appends it in sessions_container
 
         Args:
@@ -755,8 +757,9 @@ class SessionsContainer:
         Returns:
             Session: created Session object
         """        
-        session = await self.factory.create_session(max_players)
+        session = await Session.create(owner=owner, max_players=max_players)
         self.sessions.append(session)
+
         return session
 
     # COMPLETE
