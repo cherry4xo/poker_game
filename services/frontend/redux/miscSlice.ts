@@ -26,6 +26,9 @@ export const miscSlice = createSlice({
         },
         setLoading: (state, action: PayloadAction<string>) => {
             state.loading[action.payload as keyof typeof state.loading] = true;
+        },
+        clearUserSession: (state) => {
+            if (state.user) state.user.session_id = null;
         }
     }
 });

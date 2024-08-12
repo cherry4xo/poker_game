@@ -79,8 +79,7 @@ export function useApi() {
     }), []);
 
     const signout = useCallback(() => {
-        deleteAuth();
-        window.location.reload();
+        deleteAuth().then(() => window.location.href = '/');
     }, []);
 
     const create = useCallback(async () => await exec({
