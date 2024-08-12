@@ -20,6 +20,16 @@ from app import settings
 router = APIRouter()
 
 
+@router.get("/validate", status_code=200)
+async def validate_access_token(
+    user: User = Depends(decode_jwt)
+):
+    user_data = await user.to_dict()
+    session = await sessions_container.find_user_session(uuid=user.uuid)
+    user_data.update({"session_id": session.id})
+    return user_data
+
+
 @router.post("/create", response_model=SessionCreateOut, status_code=200)
 async def create_session(
     user: User = Depends(decode_jwt)
