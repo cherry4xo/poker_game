@@ -36,7 +36,7 @@ export function AuthForm({ login }: { login?: boolean }) {
             });
 
             // setLoading(true);
-            // await api[login ? 'signin' : 'signup'](values);
+            await api[login ? 'signin' : 'signup'](values);
             // if (!ok) setLoading(false);
         }}
     >
