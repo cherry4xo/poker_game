@@ -12,7 +12,6 @@ from app.models import User
 from app.schemas import SessionCreateOut
 from app.utils.sessions import sessions_container, Session, Player
 from app.utils.contrib import decode_jwt
-from app.utils.broadcast import Broadcaster
 
 from app import settings
 
@@ -63,17 +62,13 @@ async def player_join_game(
 @router.websocket("/{token}")
 async def webscoket_endpoint(
     token: str,
-    websocket: WebSocket,
-    # user: User = Depends(decode_jwt)
+    websocket: WebSocket
 ):
     await websocket.accept()
     user: User = await decode_jwt(token=token)
     user_id = user.uuid
     username = user.username
     session = await sessions_container.get_session_by_user_id(uuid=user_id)
-    # if (user_session is not None) and (user_session.id != session_id):
-    #     await websocket.close()
-    #     return RedirectResponse(f"{settings.WS_BASE_URL}/{user_session.id}/{token}")
     if session is None:
         raise WebSocketException(
             code=1007,
@@ -89,10 +84,8 @@ async def webscoket_endpoint(
     try:
         while True:
             data = await websocket.receive_json()
-            # data = json.loads(data_json)
             if data["type"] == "take_seat":
                 ans = await session.take_seat(user_id, seat_num=data["seat_num"])
-                # await session.send_personal_message(user_id, ans)
                 await session.send_all_data(session.data)
             elif data["type"] == "start":
                 ans = await session.start_game()
@@ -127,6 +120,5 @@ async def webscoket_endpoint(
                 await websocket.close(code=1000)
                 break
     except WebSocketDisconnect:
-        # await session.remove_player(player.id)
         player.websocket = None
         await session.send_all_data(session.data)
