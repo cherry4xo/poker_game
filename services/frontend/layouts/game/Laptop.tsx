@@ -33,8 +33,8 @@ function Card({ data }: { data: { rank: string, suit: string } | undefined }) {
 
 export default function Game() {
     const game = useSelector(state => state.game);
+    const { user } = useSelector(state => state.misc);
     const ws = useContext(SocketContext);
-    const { user } = useApi();
 
     return <Flex pos='relative' w='60vw' h='40vh' border='2px solid green' borderRadius='full' justify='center' align='center'>
         <Box w='100%' pos='fixed' top={0} left={0} p='20px' opacity={.75}><Header /></Box>
@@ -42,7 +42,8 @@ export default function Game() {
 
         {/*{device !== 'phone' && <Text as='pre' fontSize='12px' pos='fixed' top={0} left={0} opacity={.5}>{JSON.stringify(game, null, 2)}</Text>}*/}
         <VStack spacing={0} align='end' fontSize='12px' pos='fixed' top={0} right={0} p='10px' opacity={.5}>
-            <Text>user_id: {user.uuid}</Text>
+            <Text>game_id: {game.id}</Text>
+            <Text>user_id: {user?.uuid}</Text>
             <Text id='wsstatus'>socket status: disconnected</Text>
         </VStack>
 
@@ -72,16 +73,18 @@ export default function Game() {
                 key={i}
                 {...positions[i]}
                 {...SeatStyles}
+                userSelect='none'
                 p='6px 16px'
                 borderRadius='200px'
                 pos='absolute'
                 justify='center'
                 align='center'
+                transition='0.2s'
             >
                 {player ? <>
                     {game.current_player === i && <Text pos='absolute' bottom='40px'>ходит</Text>}
 
-                    <Text w='max-content'>{player.name ?? i} <span style={{ opacity: .5 }}>{player.id === user.uuid && '(вы)'}</span></Text>
+                    <Text w='max-content'>{player.name} <span style={{ opacity: .5 }}>{player.id === user?.uuid && '(вы)'}</span></Text>
 
                     <HStack h='30px' spacing='4px' pos='absolute' bottom='-40px'>
                         {game.status !== SessionStatus.LOBBY
@@ -95,9 +98,9 @@ export default function Game() {
                     </HStack>
 
                     <HStack w='90px' h='60px' spacing='4px' pos='absolute' bottom='-110px'>
-                        {player.hand.cards.map((card: any, i: number) => <Card key={i} data={player.id === user.uuid ? card : undefined} />)}
+                        {player.hand.cards.map((card: any, i: number) => <Card key={i} data={player.id === user?.uuid ? card : undefined} />)}
                     </HStack>
-                </> : <></>}
+                </> : <Text>занять</Text>}
             </VStack>;
         })}
 
@@ -106,7 +109,7 @@ export default function Game() {
                 {game.board.cards.map((card: any, i: number) => <Card key={i} data={card} />)}
             </HStack>
 
-            <Text>{game.total_bet}$</Text>
+            {game.total_bet && <Text>{game.total_bet}$</Text>}
         </VStack>
     </Flex>;
 }

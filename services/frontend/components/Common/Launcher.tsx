@@ -1,22 +1,22 @@
 'use client';
 import { useDispatch, useSelector } from '@/redux/hooks';
-import { setDevice } from "@/redux/miscSlice";
+import { setDevice } from '@/redux/miscSlice';
 import { motion } from 'framer-motion';
-import { ease } from "@/utils/misc";
-import { useEffect } from "react";
+import { ease } from '@/utils/misc';
+import { useEffect } from 'react';
 import { useApi } from '@/hooks';
 
 export function Launcher() {
     const dispatch = useDispatch();
     const { device } = useSelector(({ misc }) => misc);
-    const { validate, authed } = useApi();
+    const { validate } = useApi();
 
     useEffect(() => {
         function launch() {
             dispatch(setDevice(
-                window.matchMedia("(min-width: 600px)").matches && window.matchMedia("(max-width: 900px)").matches
+                window.matchMedia('(min-width: 600px)').matches && window.matchMedia('(max-width: 900px)').matches
                     ? 'tablet'
-                    : window.matchMedia("(max-width: 600px)").matches
+                    : window.matchMedia('(max-width: 600px)').matches
                         ? 'phone'
                         : 'laptop'
             ));
@@ -25,7 +25,7 @@ export function Launcher() {
         launch();
         window.onresize = launch;
 
-        if (authed) validate();
+        validate();
     }, [dispatch]);
 
     return <>
@@ -35,5 +35,5 @@ export function Launcher() {
             animate={{ opacity: device === null ? 1 : 0 }}
             transition={{ duration: 0.3, ease }}
         />
-    </>
+    </>;
 }
