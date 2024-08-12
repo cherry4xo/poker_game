@@ -135,8 +135,8 @@ export function useApi() {
                 ws.current = null;
             }
 
-            const auth = await getAuth();
-            const socket = new WebSocket(`wss://api.cherry4xo.ru/poker_game/game/${auth.access_token}`);
+            // const auth = await getAuth();
+            const socket = new WebSocket(`wss://api.cherry4xo.ru/poker_game/game/${'auth.access_token'}`);
 
             const pStatus = document.querySelector('#wsstatus');
 
