@@ -108,7 +108,6 @@ export function useApi() {
                 method: 'get',
                 url: '/poker_game/game/validate',
                 onSuccess(data: IUser) {
-                    console.log(data);
                     dispatch(setUser(data));
                 }
             });
