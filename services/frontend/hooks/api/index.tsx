@@ -121,7 +121,7 @@ export function useApi() {
             url: '/poker_users/users',
             body: payload,
             async onSuccess() {
-                await signin({ username: payload.email, password: payload.password, email: '' });
+                await signin({ username: payload.email, password: payload.password, email: '', repeatedPassword: '' });
             }
         }),
 
