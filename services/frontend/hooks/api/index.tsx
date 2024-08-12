@@ -1,3 +1,4 @@
+'use client';
 import axios, { Method } from 'axios';
 import { useToast } from '@chakra-ui/react';
 import { useCallback, useContext } from 'react';
