@@ -29,12 +29,12 @@ export function Controls() {
         ]
     ];
 
-    return <HStack h='80px' spacing='12px'>
-        {status === SessionStatus.LOBBY
-            ? (seats.filter(s => s).length >= 2 && owner === user?.uuid)
-            : (seats[current_player ?? 0] === user?.uuid)
-            &&
-            buttons[status].map((b: any, i: number) =>
-                <Button key={i} h='100%' px='0px' rounded='10px' variant='outline' colorScheme={b.color} onClick={() => ws.current.send(JSON.stringify(b.payload))}>{b.label}</Button>)}
+    return <HStack h='50px' spacing='8px'>
+        {(
+                status === SessionStatus.LOBBY
+                    ? (seats.filter(s => s).length >= 2 && owner === user?.uuid)
+                    : (seats[current_player ?? 0] === user?.uuid)
+            ) &&
+            buttons[status].map((b: any, i: number) => <Button key={i} h='100%' px='12px' rounded='10px' variant='outline' colorScheme={b.color} onClick={() => ws.current.send(JSON.stringify(b.payload))}>{b.label}</Button>)}
     </HStack>;
 }

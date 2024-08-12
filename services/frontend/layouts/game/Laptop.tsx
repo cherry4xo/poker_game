@@ -38,13 +38,12 @@ export default function Game() {
 
     return <Flex pos='relative' w='60vw' h='40vh' border='2px solid green' borderRadius='full' justify='center' align='center'>
         <Box w='100%' pos='fixed' top={0} left={0} p='20px' opacity={.75}><Header /></Box>
-        {game.players.filter(p => p).length > 1 && <Box pos='fixed' bottom='30px' right='30px'><Controls /></Box>}
+        {game.players.length >= 2 && <Box pos='fixed' bottom='30px' right='30px'><Controls /></Box>}
 
-        {/*{device !== 'phone' && <Text as='pre' fontSize='12px' pos='fixed' top={0} left={0} opacity={.5}>{JSON.stringify(game, null, 2)}</Text>}*/}
         <VStack spacing={0} align='end' fontSize='12px' pos='fixed' top={0} right={0} p='10px' opacity={.5}>
             <Text>game_id: {game.id}</Text>
             <Text>user_id: {user?.uuid}</Text>
-            <Text id='wsstatus'>socket status: disconnected</Text>
+            <Text id='wsstatus'>disconnected</Text>
         </VStack>
 
         {Array.from({ length: game.seats.length }, (_: any, i: number) => {

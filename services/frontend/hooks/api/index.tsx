@@ -8,6 +8,7 @@ import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
 import { setLoading, setUser } from '@/redux/miscSlice';
 import { deleteAuth, getAuth, setAuth } from './cookiesStore';
+import { usePathname } from 'next/navigation';
 
 const api = axios.create({
     baseURL: 'https://api.cherry4xo.ru'
@@ -16,6 +17,7 @@ const api = axios.create({
 export function useApi() {
     const toast = useToast();
     const dispatch = useDispatch();
+    const pathname = usePathname();
     const ws = useContext(SocketContext);
 
     const exec = useCallback(async (
@@ -41,9 +43,11 @@ export function useApi() {
         } catch (err) {
             // @ts-ignore
             const detail = err?.response?.data?.detail ?? 'unknown error';
+            // @ts-ignore
+            const code = err?.status ?? 401;
 
-            if (['Could not validate credentials', 'Not authenticated'].includes(detail)) {
-                if (!!auth.token_type) signout();
+            if (['Could not validate credentials', 'Not authenticated'].includes(detail) || code === 401) {
+                if (pathname !== '/') signout();
             } else {
                 console.error(err);
                 toast({
@@ -78,6 +82,15 @@ export function useApi() {
         }
     }), []);
 
+    const signup = useCallback(async (payload: ISignup) => await exec({
+        method: 'post',
+        url: '/poker_users/users',
+        body: payload,
+        async onSuccess() {
+            await signin({ username: payload.email, password: payload.password, email: '', repeatedPassword: '' });
+        }
+    }), []);
+
     const signout = useCallback(() => {
         deleteAuth().then(() => window.location.href = '/');
     }, []);
@@ -94,9 +107,36 @@ export function useApi() {
         method: 'post',
         url: '/poker_game/game/create',
         async onSuccess(data) {
-            join(data.uuid);
+            await join(data.uuid);
         }
     }), []);
+
+    const connect = useCallback(async () => {
+        if (ws.current) {
+            ws.current.close();
+            ws.current = null;
+        }
+
+        const auth = await getAuth();
+        const socket = new WebSocket(`wss://api.cherry4xo.ru/poker_game/game/${auth.access_token}`);
+
+        const pStatus = document.querySelector('#wsstatus');
+
+        socket.onopen = () => {
+            if (pStatus) pStatus.innerHTML = 'connected';
+        };
+        socket.onclose = () => {
+            if (pStatus) pStatus.innerHTML = 'disconnected';
+            setTimeout(connect, 1000);
+        };
+
+        socket.onmessage = e => {
+            const data = JSON.parse(JSON.parse(e.data));
+            dispatch(setGameState(data));
+        };
+
+        ws.current = socket;
+    }, []);
 
     return {
         async load(func: string) {
@@ -106,55 +146,19 @@ export function useApi() {
             if (func === 'signout') signout();
         },
 
-        validate: async () => {
-            await exec({
-                method: 'get',
-                url: '/poker_game/game/validate',
-                onSuccess(data: IUser) {
-                    dispatch(setUser(data));
-                }
-            });
-        },
-
-        signin,
-
-        signup: async (payload: ISignup) => await exec({
-            method: 'post',
-            url: '/poker_users/users',
-            body: payload,
-            async onSuccess() {
-                await signin({ username: payload.email, password: payload.password, email: '', repeatedPassword: '' });
+        validate: async () => await exec({
+            method: 'get',
+            url: '/poker_game/game/validate',
+            onSuccess(data: IUser) {
+                dispatch(setUser(data));
             }
         }),
 
+        signin,
+        signup,
         signout,
         create,
         join,
-
-        connect: async () => {
-            if (ws.current) {
-                ws.current.close();
-                ws.current = null;
-            }
-
-            const auth = await getAuth();
-            const socket = new WebSocket(`wss://api.cherry4xo.ru/poker_game/game/${auth.access_token}`);
-
-            const pStatus = document.querySelector('#wsstatus');
-
-            socket.onopen = () => {
-                if (pStatus) pStatus.innerHTML = 'connected';
-            };
-            socket.onclose = () => {
-                if (pStatus) pStatus.innerHTML = 'disconnected';
-            };
-
-            socket.onmessage = e => {
-                const data = JSON.parse(JSON.parse(e.data));
-                dispatch(setGameState(data));
-            };
-
-            ws.current = socket;
-        }
+        connect
     };
 }

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useContext } from 'react';
 import { SocketContext } from '@/app/SocketContext';
 import { useDispatch, useSelector } from '@/redux/hooks';
-import { TbCirclePlus, TbHome, TbDoorExit } from "react-icons/tb";
+import { TbCirclePlus, TbDoorExit, TbHome } from 'react-icons/tb';
 import { SessionStatus } from '@/utils/enums';
 
 export function Header() {
@@ -18,26 +18,26 @@ export function Header() {
 
         <Link href='/'>
             <Button leftIcon={<TbDoorExit />} onClick={() => {
-            ws.current.send(JSON.stringify({ type: 'exit' }));
-            toast({
-                status: 'info',
-                title: 'Вы покинули игру!',
-                duration: 3000,
-                isClosable: true
-            });
-            dispatch({ type: 'misc/clearUserSession' });
+                ws.current.send(JSON.stringify({ type: 'exit' }));
+                toast({
+                    status: 'info',
+                    title: 'Вы покинули игру!',
+                    duration: 3000,
+                    isClosable: true
+                });
+                dispatch({ type: 'misc/clearUserSession' });
             }}>Покинуть игру</Button>
         </Link>
 
         <Button leftIcon={<TbCirclePlus />} isDisabled={status === SessionStatus.GAME} onClick={() => {
-            navigator.clipboard.writeText('http://poker.mkrk.cc/join/' + id);
+            prompt('Скопируйте и отправьте другу!', 'https://poker.twodev.cc/join/' + id);
 
             toast({
                 status: 'info',
                 description: 'Ссылка скопирована в буфер обмена! Отправьте её другу!',
                 duration: 3000,
                 isClosable: true
-            })
+            });
         }}>Пригласить друга</Button>
-    </HStack>
+    </HStack>;
 }
