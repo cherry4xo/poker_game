@@ -65,7 +65,7 @@ export function useApi() {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
         onSuccess(data) {
-            setAuth(data);
+            // setAuth(data);
             window.location.href = '/';
 
             toast({
@@ -78,7 +78,7 @@ export function useApi() {
     }), []);
 
     const signout = useCallback(() => {
-        deleteAuth();
+        // deleteAuth();
         window.location.reload();
     }, []);
 
