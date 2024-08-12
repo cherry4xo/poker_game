@@ -5,13 +5,9 @@ import { IAuth } from '@/utils/types';
 const authVar = 'poker_auth';
 
 export async function getAuth() {
-    try {
-        const data = cookies().get(authVar);
+    const data = cookies().get(authVar);
 
-        return JSON.parse(data?.value ?? JSON.stringify({ token_type: null, refresh_token: '', access_token: '' }));
-    } catch (e) {
-        console.error(e);
-    }
+    return JSON.parse(data?.value ?? JSON.stringify({ token_type: null, refresh_token: '', access_token: '' }));
 }
 
 export async function setAuth(payload: IAuth) {
