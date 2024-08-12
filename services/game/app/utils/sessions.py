@@ -193,6 +193,7 @@ class Session(Broadcaster):
         self.dealer = data["dealer"]
         self.current_bet = data["current_bet"]
         self.total_bet = data["total_bet"]
+        self.owner = UUID(data["owner"]) if data["owner"] != "None" else None
         for player_data in data["players"]:
             player = self.get_player(player_id=player_data["id"])
             if player is not None:
@@ -298,7 +299,8 @@ class Session(Broadcaster):
                 "current_player": self.current_player,
                 "dealer": self.dealer,
                 "current_bet": self.current_bet,
-                "total_bet": self.total_bet
+                "total_bet": self.total_bet,
+                "owner": str(self.owner)
             }
         await self.set_data(data=self.data)
 
