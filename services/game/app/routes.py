@@ -26,7 +26,8 @@ async def validate_access_token(
 ):
     user_data = await user.to_dict()
     session = await sessions_container.find_user_session(uuid=user.uuid)
-    user_data.update({"session_id": session.id})
+    session_data = {"session_id": session.id if session is not None else None}
+    user_data.update(session_data)
     return user_data
 
 
