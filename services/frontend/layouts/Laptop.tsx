@@ -11,7 +11,8 @@ export default function Home() {
         {user
             ? <>
                 <Text>Вы авторизованы как {user.email}</Text>
-                <Button onClick={() => load('create')} isLoading={loading.create} colorScheme='teal'>Играть</Button>
+                {!!user.session_id && <Link href='/game'><Button colorScheme='yellow'>Вернуться в игру</Button></Link>}
+                <Button onClick={() => load('create')} isLoading={loading.create} colorScheme='teal' isDisabled={!!user.session_id}>Начать новую игру</Button>
                 <Button onClick={() => load('signout')} isLoading={loading.signout} colorScheme='red'>Выйти из аккаунта</Button>
             </>
             : <>

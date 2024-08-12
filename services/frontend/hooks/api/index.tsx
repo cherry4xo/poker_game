@@ -6,26 +6,23 @@ import { SocketContext } from '@/app/SocketContext';
 import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
 import { setLoading, setUser } from '@/redux/miscSlice';
+import { deleteAuth, getAuth, setAuth } from './cookiesStore';
 
 const api = axios.create({
     baseURL: 'https://api.cherry4xo.ru'
 });
-
-const authVar = 'poker_auth';
 
 export function useApi() {
     const toast = useToast();
     const dispatch = useDispatch();
     const ws = useContext(SocketContext);
 
-    const auth = { token_type: '', refresh_token: '', access_token: '' };
-
-    // const auth = JSON.parse(cookieStore.get(authVar) ?? JSON.stringify(initAuth));
-
     const exec = useCallback(async (
         { method, url, body = {}, headers = {}, onSuccess }:
             { method: Method, url: string, body?: any, headers?: any, onSuccess?: (data: any) => void }
     ) => {
+        const auth = await getAuth();
+
         try {
             const Authorization = !!auth.token_type ? `${auth.token_type.charAt(0).toUpperCase() + auth.token_type.slice(1)} ${auth.access_token}` : '';
 
@@ -40,20 +37,20 @@ export function useApi() {
 
             return true;
         } catch (err) {
-            console.error(err);
-
             // @ts-ignore
             const detail = err?.response?.data?.detail ?? 'unknown error';
 
-            if (detail === 'Could not validate credentials') {
-                signout();
-                window.location.replace('/auth');
-            } else toast({
-                status: 'error',
-                duration: 3000,
-                title: 'Error',
-                description: detail
-            });
+            if (['Could not validate credentials', 'Not authenticated'].includes(detail)) {
+                if (!!auth.token_type) signout();
+            } else {
+                console.error(err);
+                toast({
+                    status: 'error',
+                    duration: 3000,
+                    title: 'Error',
+                    description: detail
+                });
+            }
 
             return false;
         }
@@ -67,7 +64,7 @@ export function useApi() {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
         onSuccess(data) {
-            // localStorage.setItem(authVar, JSON.stringify(data));
+            setAuth(data);
             window.location.href = '/';
 
             toast({
@@ -80,7 +77,7 @@ export function useApi() {
     }), []);
 
     const signout = useCallback(() => {
-        // localStorage.deleteItem(authVar);
+        deleteAuth();
         window.location.reload();
     }, []);
 
@@ -109,8 +106,9 @@ export function useApi() {
         validate: async () => {
             await exec({
                 method: 'get',
-                url: '/poker_auth/login/validate',
+                url: '/poker_game/game/validate',
                 onSuccess(data: IUser) {
+                    console.log(data);
                     dispatch(setUser(data));
                 }
             });
@@ -130,21 +128,22 @@ export function useApi() {
         signout,
         create,
 
-        connect: () => {
+        connect: async () => {
             if (ws.current) {
                 ws.current.close();
                 ws.current = null;
             }
 
+            const auth = await getAuth();
             const socket = new WebSocket(`wss://api.cherry4xo.ru/poker_game/game/${auth.access_token}`);
 
+            const pStatus = document.querySelector('#wsstatus');
+
             socket.onopen = () => {
-                // @ts-ignore
-                document.querySelector('#wsstatus').innerHTML = 'connected';
+                if (pStatus) pStatus.innerHTML = 'connected';
             };
             socket.onclose = () => {
-                // @ts-ignore
-                document.querySelector('#wsstatus').innerHTML = 'disconnected';
+                if (pStatus) pStatus.innerHTML = 'disconnected';
             };
 
             socket.onmessage = e => {

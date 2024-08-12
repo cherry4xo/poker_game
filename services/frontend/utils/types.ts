@@ -8,6 +8,7 @@ export interface IGame {
     big_blind: number;
     max_players: number;
     players: IPlayer[];
+    owner: string;
     stage: SessionStage;
     board: {
         cards: any[],
@@ -43,6 +44,7 @@ export interface IUser {
     registration_date: string;
     is_admin: boolean;
     is_confirmed: boolean;
+    session_id: string | null;
     email: string;
 }
 
@@ -50,6 +52,7 @@ export interface ISignup {
     username: string;
     email: string;
     password: string;
+    repeatedPassword: string;
 }
 
 export interface IAuth {

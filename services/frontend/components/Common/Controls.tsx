@@ -9,7 +9,7 @@ import { SessionStatus } from '@/utils/enums';
 export function Controls() {
     const ws = useContext(SocketContext);
     const { user } = useSelector(state => state.misc);
-    const { status, seats, players, current_player } = useSelector(state => state.game);
+    const { status, seats, players, current_player, owner } = useSelector(state => state.game);
 
     const toSupport = current_player
         ? (Math.max(...players.map((p: IPlayer) => p.currentbet)) - players[current_player]?.currentbet || 5)
@@ -30,7 +30,10 @@ export function Controls() {
     ];
 
     return <HStack h='80px' spacing='12px'>
-        {(status === SessionStatus.LOBBY ? seats.filter(s => s).length >= 2 : seats[current_player ?? 0] === user?.uuid) &&
+        {status === SessionStatus.LOBBY
+            ? (seats.filter(s => s).length >= 2 && owner === user?.uuid)
+            : (seats[current_player ?? 0] === user?.uuid)
+            &&
             buttons[status].map((b: any, i: number) =>
                 <Button key={i} h='100%' px='0px' rounded='10px' variant='outline' colorScheme={b.color} onClick={() => ws.current.send(JSON.stringify(b.payload))}>{b.label}</Button>)}
     </HStack>;

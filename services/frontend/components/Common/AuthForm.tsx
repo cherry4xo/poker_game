@@ -1,33 +1,49 @@
 'use client';
 import { Field, Formik } from 'formik';
-import { Button, FormControl, FormErrorMessage, Input, VStack } from '@chakra-ui/react';
+import { Button, FormControl, FormErrorMessage, Input, useToast, VStack } from '@chakra-ui/react';
 import { useState } from 'react';
-import { useSelector } from '@/redux/hooks';
 import { useApi } from '@/hooks';
 import { ISignup } from '@/utils/types';
 
-export function AuthForm({ login }: { login?: boolean }) {
-    const [loading, setLoading] = useState<boolean>(false);
-    const { device } = useSelector(state => state.misc);
+const aliases = {
+    username: 'Никнейм',
+    email: 'Почта',
+    password: 'Пароль',
+    repeatedPassword: 'Повторите пароль'
+};
 
+type IAlias = keyof typeof aliases;
+
+export function AuthForm({ login }: { login?: boolean }) {
+    const toast = useToast();
+    const [loading, setLoading] = useState<boolean>(false);
     const { signin, signup } = useApi();
 
     return <Formik
         initialValues={{
             username: '',
             email: '',
-            password: ''
+            password: '',
+            repeatedPassword: ''
         }}
         onSubmit={async (values: ISignup) => {
+            if (!login && values.password !== values.repeatedPassword) return toast({
+                status: 'error',
+                title: 'Ошибка',
+                description: 'Пароли не совпадают!',
+                duration: 3000,
+                isClosable: true
+            });
+
             setLoading(true);
             const method = login ? signin : signup;
             const ok = await method(values);
             if (!ok) setLoading(false);
         }}
     >
-        {({ handleSubmit, errors, touched }) => <form style={{ width: device === 'laptop' ? '50%' : '100%' }} onSubmit={handleSubmit}>
+        {({ handleSubmit, errors, touched }) => <form style={{ width: '25%' }} onSubmit={handleSubmit}>
             <VStack w='100%' spacing='8px' align='start'>
-                {(login ? ['username', 'password'] : ['username', 'email', 'password']).map((field: string, i: number) =>
+                {(login ? ['username', 'password'] : ['username', 'email', 'password', 'repeatedPassword']).map((field: string, i: number) =>
                     <FormControl key={i} isInvalid={!!errors[field as keyof typeof errors] && !!touched[field as keyof typeof errors]}>
                         <Field
                             as={Input}
@@ -35,7 +51,7 @@ export function AuthForm({ login }: { login?: boolean }) {
                             rounded='15px'
                             id={field}
                             name={field}
-                            placeholder={login ? (field === 'username' ? 'email' : field) : field}
+                            placeholder={aliases[(login ? (field === 'username' ? 'email' : field) : field) as IAlias]}
                             // validate={(value: string) => {
                             //     let error;
                             //     if (value.length !== 10) error = 'Номер телефона должен быть без кода страны';
