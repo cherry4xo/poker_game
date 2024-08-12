@@ -17,7 +17,7 @@ type IAlias = keyof typeof aliases;
 export function AuthForm({ login }: { login?: boolean }) {
     const toast = useToast();
     const [loading, setLoading] = useState<boolean>(false);
-    const { signin, signup } = useApi();
+    const api = useApi();
 
     return <Formik
         initialValues={{
@@ -35,10 +35,9 @@ export function AuthForm({ login }: { login?: boolean }) {
                 isClosable: true
             });
 
-            setLoading(true);
-            const method = login ? signin : signup;
-            const ok = await method(values);
-            if (!ok) setLoading(false);
+            // setLoading(true);
+            // await api[login ? 'signin' : 'signup'](values);
+            // if (!ok) setLoading(false);
         }}
     >
         {({ handleSubmit, errors, touched }) => <form style={{ width: '25%' }} onSubmit={handleSubmit}>
