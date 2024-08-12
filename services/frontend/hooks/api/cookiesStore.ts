@@ -9,7 +9,7 @@ export async function getAuth() {
 
     return new Promise(resolve =>
         resolve(JSON.parse(data?.value ?? JSON.stringify({ token_type: null, refresh_token: '', access_token: '' })))
-    );
+    ) as unknown as IAuth;
 }
 
 export async function setAuth(payload: IAuth) {
