@@ -22,7 +22,8 @@ export function useApi() {
         { method, url, body = {}, headers = {}, onSuccess }:
             { method: Method, url: string, body?: any, headers?: any, onSuccess?: (data: any) => void }
     ) => {
-        const auth = await getAuth();
+        // const auth = await getAuth();
+        const auth = { token_type: '', refresh_token: '', access_token: '' };
 
         try {
             const Authorization = !!auth.token_type ? `${auth.token_type.charAt(0).toUpperCase() + auth.token_type.slice(1)} ${auth.access_token}` : '';

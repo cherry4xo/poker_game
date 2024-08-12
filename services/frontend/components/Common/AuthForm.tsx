@@ -35,9 +35,9 @@ export function AuthForm({ login }: { login?: boolean }) {
                 isClosable: true
             });
 
-            // setLoading(true);
-            await api[login ? 'signin' : 'signup'](values);
-            // if (!ok) setLoading(false);
+            setLoading(true);
+            const ok = await api[login ? 'signin' : 'signup'](values);
+            if (!ok) setLoading(false);
         }}
     >
         {({ handleSubmit, errors, touched }) => <form style={{ width: '25%' }} onSubmit={handleSubmit}>
