@@ -78,9 +78,13 @@ async def webscoket_endpoint(
     if player is not None:
         player.websocket = websocket
         await session.send_all_data(session.data)
+        chat_history = await session.get_all_messages()
+        await session.send_personal_message(player_id=player.id, data=chat_history)
     else:
         player = Player(uuid=user_id, name=username, websocket=websocket)
         await session.add_player(player=player)
+        chat_history = await session.get_all_messages()
+        await session.send_personal_message(player_id=player.id, data=chat_history)
     try:
         while True:
             data = await websocket.receive_json()
@@ -119,6 +123,9 @@ async def webscoket_endpoint(
                 await session.send_all_data(session.data)
                 await websocket.close(code=1000)
                 break
+            elif data["type"] == "new_message":
+                ans = await session.send_chat_message(player_id=user_id, message=data["message"])
+                await session.send_all_data(ans)
     except WebSocketDisconnect:
         player.websocket = None
         await session.send_all_data(session.data)

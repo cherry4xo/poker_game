@@ -12,6 +12,7 @@ from pydantic import UUID4
 
 from app.utils.redis import r, ping_redis_connection
 from app.utils.broadcast import Broadcaster
+from app.utils.chat import Chat, Message
 from app.utils.player import Player, PlayerStatus, Deck, Card, Hand, dict_to_pokerhand
 from app import settings
 
@@ -73,6 +74,7 @@ class Session(Broadcaster):
         self.total_bet: Optional[float] = total_bet
         self.owner: Optional[UUID4] = owner
         self.deck: Deck = Deck()
+        self.chat: Chat = Chat(session_id=self.id)
         seats_dict = [str(seat) for seat in self.seats]
         if data is None:
             self.data = {
@@ -89,7 +91,8 @@ class Session(Broadcaster):
                 "dealer": self.dealer,
                 "current_bet": self.current_bet,
                 "total_bet": self.total_bet,
-                "owner": str(self.owner) if self.owner is not None else None
+                "owner": str(self.owner) if self.owner is not None else None,
+                "chat": self.chat.list
             }
         else:
             self.data = data
@@ -300,6 +303,7 @@ class Session(Broadcaster):
                 "dealer": self.dealer,
                 "current_bet": self.current_bet,
                 "total_bet": self.total_bet,
+                "messages": self.chat.list,
                 "owner": str(self.owner)
             }
         await self.set_data(data=self.data)
@@ -589,6 +593,26 @@ class Session(Broadcaster):
             "message": "checked",
             "data": self.data
         }
+    
+    async def send_chat_message(self, player_id: UUID4, message: str) -> None:
+        player = self.get_player(player_id=player_id)
+        if player is None:
+            return
+        message_obj = Message(player_id=player.id, username=player.name, message=message)
+        await self.chat.send_message(message=message_obj)
+        data = {
+            "type": "chat_incoming",
+            "payload": message_obj.__str__()
+        }
+        return data
+
+    async def get_all_messages(self) -> None:
+        messages = await self.chat.get_all_messages()
+        data = {
+            "type": "chat_history",
+            "payload": [message.__str__() for message in messages]
+        }
+        return data
 
 
 class SessionsContainer:
