@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from random import randint, choice
 from typing import List, Optional
 from operator import is_not
@@ -55,6 +56,7 @@ class Session(Broadcaster):
         total_bet: Optional[float] = None,
         owner: Optional[UUID4] = None,
         data: Optional[dict] = None,
+        last_active: Optional[datetime] = datetime.now() 
     ) -> None:
         super().__init__(players)
         self.max_players: int = max_players or settings.DEFAULT_MAX_PLAYERS
@@ -73,6 +75,7 @@ class Session(Broadcaster):
         self.total_bet: Optional[float] = total_bet
         self.owner: Optional[UUID4] = owner
         self.deck: Deck = Deck()
+        self.last_active: datetime = last_active
         seats_dict = [str(seat) for seat in self.seats]
         if data is None:
             self.data = {
@@ -89,7 +92,8 @@ class Session(Broadcaster):
                 "dealer": self.dealer,
                 "current_bet": self.current_bet,
                 "total_bet": self.total_bet,
-                "owner": str(self.owner) if self.owner is not None else None
+                "owner": str(self.owner) if self.owner is not None else None,
+                "last_active": str(last_active)
             }
         else:
             self.data = data
@@ -112,6 +116,7 @@ class Session(Broadcaster):
         current_bet: Optional[float] = None,
         total_bet: Optional[float] = None,
         owner: Optional[UUID4] = None,
+        last_active: Optional[datetime] = datetime.now(),
         data: Optional[dict] = None
     ) -> "Session":
         """creates new Session object
@@ -152,6 +157,7 @@ class Session(Broadcaster):
             current_bet=current_bet,
             total_bet=total_bet,
             owner=owner,
+            last_active=last_active,
             data=data,
         )
         await session.save()
@@ -193,6 +199,7 @@ class Session(Broadcaster):
         self.dealer = data["dealer"]
         self.current_bet = data["current_bet"]
         self.total_bet = data["total_bet"]
+        self.last_active = datetime.fromisoformat(data["last_active"])
         self.owner = UUID(data["owner"]) if data["owner"] != "None" else None
         for player_data in data["players"]:
             player = self.get_player(player_id=player_data["id"])
@@ -300,7 +307,8 @@ class Session(Broadcaster):
                 "dealer": self.dealer,
                 "current_bet": self.current_bet,
                 "total_bet": self.total_bet,
-                "owner": str(self.owner)
+                "owner": str(self.owner),
+                "last_active": str(self.last_active)
             }
         await self.set_data(data=self.data)
 
