@@ -1,6 +1,6 @@
 import { Box, Flex, FlexProps, HStack, StackProps, Text, VStack } from '@chakra-ui/react';
 import { positions } from '@/utils/misc';
-import { Controls, Header } from '@/components/Common';
+import { ChatBlock, Controls, Header } from '@/components/Common';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
 import { PlayerStatus, SessionStatus } from '@/utils/enums';
@@ -38,6 +38,7 @@ export default function Game() {
 
     return <Flex pos='relative' w='60vw' h='40vh' border='2px solid green' borderRadius='full' justify='center' align='center'>
         <Box w='100%' pos='fixed' top={0} left={0} p='20px' opacity={.75}><Header /></Box>
+        {game.seats.includes(user?.uuid) && <Box pos='fixed' bottom={0} left={0}><ChatBlock /></Box>}
         {game.players.length >= 2 && <Box pos='fixed' bottom='30px' right='30px'><Controls /></Box>}
 
         <VStack spacing={0} align='end' fontSize='12px' pos='fixed' top={0} right={0} p='10px' opacity={.5}>
@@ -108,7 +109,9 @@ export default function Game() {
                 {game.board.cards.map((card: any, i: number) => <Card key={i} data={card} />)}
             </HStack>
 
-            {game.total_bet && <Text>{game.total_bet}$</Text>}
+            {game.status === SessionStatus.LOBBY
+                ? <Text>Ожидаем игроков...</Text>
+                : <Text>{game.total_bet}$</Text>}
         </VStack>
     </Flex>;
 }

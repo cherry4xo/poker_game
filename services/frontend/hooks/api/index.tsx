@@ -6,7 +6,7 @@ import { ISignup, IUser } from '@/utils/types';
 import { SocketContext } from '@/app/SocketContext';
 import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
-import { setLoading, setUser } from '@/redux/miscSlice';
+import { addChatMsg, setChatHistory, setLoading, setUser } from '@/redux/miscSlice';
 import { deleteAuth, getAuth, setAuth } from './cookiesStore';
 import { usePathname } from 'next/navigation';
 
@@ -132,7 +132,9 @@ export function useApi() {
 
         socket.onmessage = e => {
             const data = JSON.parse(JSON.parse(e.data));
-            dispatch(setGameState(data));
+            if (data?.type === 'chat_history') dispatch(setChatHistory(data.payload));
+            else if (data?.type === 'chat_incoming') dispatch(addChatMsg(data.payload));
+            else dispatch(setGameState(data));
         };
 
         ws.current = socket;

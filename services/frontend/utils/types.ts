@@ -60,3 +60,10 @@ export interface IAuth {
     access_token: string;
     refresh_token: string;
 }
+
+export interface IMessage {
+    datetime: string;
+    player_id: string;
+    username: string;
+    text: string;
+}

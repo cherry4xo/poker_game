@@ -1,18 +1,29 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
-import { IUser } from '@/utils/types';
+import { IMessage, IUser } from '@/utils/types';
 
 interface MiscState {
     device: string | null;
     user: IUser | null;
     loading: any;
+    chat: IMessage[];
 }
 
 const initialState: MiscState = {
     device: null,
     user: null,
-    loading: {}
+    loading: {},
+    chat: []
 };
+
+function decryptMsg(msg: string): IMessage {
+    const [raw_datetime, player_id, username, text] = msg.split('::');
+
+    let datetime: Date | string = new Date(raw_datetime);
+    datetime = `${datetime.toLocaleTimeString('ru-RU')}`;
+
+    return { datetime, player_id, username, text };
+}
 
 export const miscSlice = createSlice({
     name: 'misc',
@@ -29,9 +40,15 @@ export const miscSlice = createSlice({
         },
         clearUserSession: (state) => {
             if (state.user) state.user.session_id = null;
+        },
+        setChatHistory: (state, action: PayloadAction<string[]>) => {
+            state.chat = action.payload.map(decryptMsg);
+        },
+        addChatMsg: (state, action: PayloadAction<string>) => {
+            state.chat.push(decryptMsg(action.payload));
         }
     }
 });
 
-export const { setDevice, setUser, setLoading } = miscSlice.actions;
+export const { setDevice, setUser, setLoading, setChatHistory, addChatMsg } = miscSlice.actions;
 export default miscSlice.reducer;
