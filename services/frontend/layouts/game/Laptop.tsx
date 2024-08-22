@@ -4,9 +4,7 @@ import { ChatBlock, Controls, Header } from '@/components/Common';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
 import { PlayerStatus, SessionStatus } from '@/utils/enums';
-import { useContext } from 'react';
-import { SocketContext } from '@/app/SocketContext';
-import { useApi } from '@/hooks';
+import { useWs } from '@/app/SocketContext';
 // @ts-ignore
 import * as deck from '@letele/playing-cards';
 
@@ -34,7 +32,7 @@ function Card({ data }: { data: { rank: string, suit: string } | undefined }) {
 export default function Game() {
     const game = useSelector(state => state.game);
     const { user } = useSelector(state => state.misc);
-    const ws = useContext(SocketContext);
+    const ws = useWs();
 
     return <Flex pos='relative' w='60vw' h='40vh' border='2px solid green' borderRadius='full' justify='center' align='center'>
         <Box w='100%' pos='fixed' top={0} left={0} p='20px' opacity={.75}><Header /></Box>

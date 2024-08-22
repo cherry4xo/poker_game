@@ -1,4 +1,4 @@
-import { createContext, useRef } from 'react';
+import { createContext, useContext, useRef } from 'react';
 
 export const SocketContext = createContext(null as any);
 
@@ -9,3 +9,5 @@ export function SocketContextProvider({ children }: { children: React.ReactNode 
         {children}
     </SocketContext.Provider>;
 }
+
+export const useWs = useContext(SocketContext);

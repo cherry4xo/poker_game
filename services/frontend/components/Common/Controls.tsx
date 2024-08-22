@@ -2,12 +2,11 @@
 import { Button, HStack } from '@chakra-ui/react';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
-import { useContext } from 'react';
-import { SocketContext } from '@/app/SocketContext';
+import { useWs } from '@/app/SocketContext';
 import { SessionStatus } from '@/utils/enums';
 
 export function Controls() {
-    const ws = useContext(SocketContext);
+    const ws = useWs();
     const { user } = useSelector(state => state.misc);
     const { status, seats, players, current_player, owner } = useSelector(state => state.game);
 

@@ -1,12 +1,12 @@
 'use client';
 import { Button, HStack, Input, Text, VStack } from '@chakra-ui/react';
-import { useContext, useState } from 'react';
-import { SocketContext } from '@/app/SocketContext';
+import { useState } from 'react';
+import { useWs } from '@/app/SocketContext';
 import { useSelector } from '@/redux/hooks';
 import { IMessage } from '@/utils/types';
 
 export function ChatBlock() {
-    const ws = useContext(SocketContext);
+    const ws = useWs();
     const [text, setText] = useState('');
     const { chat } = useSelector(state => state.misc);
 

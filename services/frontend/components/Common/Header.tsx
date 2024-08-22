@@ -1,15 +1,14 @@
 'use client';
 import { Button, HStack, IconButton, useToast } from '@chakra-ui/react';
 import Link from 'next/link';
-import { useContext } from 'react';
-import { SocketContext } from '@/app/SocketContext';
+import { useWs } from '@/app/SocketContext';
 import { useDispatch, useSelector } from '@/redux/hooks';
 import { TbCirclePlus, TbDoorExit, TbHome } from 'react-icons/tb';
 import { SessionStatus } from '@/utils/enums';
 
 export function Header() {
     const { id, status } = useSelector(state => state.game);
-    const ws = useContext(SocketContext);
+    const ws = useWs();
     const toast = useToast();
     const dispatch = useDispatch();
 

@@ -1,9 +1,9 @@
 'use client';
 import axios, { Method } from 'axios';
 import { useToast } from '@chakra-ui/react';
-import { useCallback, useContext } from 'react';
+import { useCallback } from 'react';
 import { ISignup, IUser } from '@/utils/types';
-import { SocketContext } from '@/app/SocketContext';
+import { useWs } from '@/app/SocketContext';
 import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
 import { addChatMsg, setChatHistory, setLoading, setUser } from '@/redux/miscSlice';
@@ -18,7 +18,7 @@ export function useApi() {
     const toast = useToast();
     const dispatch = useDispatch();
     const pathname = usePathname();
-    const ws = useContext(SocketContext);
+    const ws = useWs();
 
     const exec = useCallback(async (
         { method, url, body = {}, headers = {}, onSuccess }:
