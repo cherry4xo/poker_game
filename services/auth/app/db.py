@@ -34,7 +34,7 @@ def register_db(app: FastAPI, db_url: str = None) -> None:
         app,
         db_url=db_url,
         modules={"models": app_list},
-        generate_schemas=False,
+        generate_schemas=True,
         add_exception_handlers=True
     )
 
@@ -48,7 +48,7 @@ async def upgrade_db(app: FastAPI, db_url: str = None):
 
 
 async def init(app: FastAPI):
-    await upgrade_db(app)
+    # await upgrade_db(app)
     register_db(app)
     logger.debug("Connected to db")
     await ping_redis_connection(r)
