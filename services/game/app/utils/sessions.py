@@ -37,6 +37,42 @@ class SessionStage(Enum):
     SHOWDOWN = 4
 
 
+class SidePot:
+    def __init__(self):
+        self.amount: float = 0
+        self.eligible_players: List[Player] = []
+
+    def add_bet(self, amount: float, player: Player):
+        self.amount += amount
+        if player not in self.eligible_players:
+            self.eligible_players.append(player)
+
+    def distribute(self, winners: List[UUID4]) -> dict:
+        winnings = {}
+        num_winners = len(winners)
+        for player in self.eligible_players:
+            if player.id in winners:
+                share = self.amount / num_winners
+                winnings[player.id] = share
+        return winnings
+
+    def dict(self):
+        return {
+            "amount": self.amount,
+            "eligible_players": [player.id for player in self.eligible_players]
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict, players: List[Player]):
+        side_pot = cls()
+        side_pot.amount = data.get("amount", 0)
+        eligible_player_ids = data.get("eligible_players", [])
+        for player in players:
+            if player.id in eligible_player_ids:
+                side_pot.eligible_players.append(player)
+        return side_pot
+
+
 class Session(Broadcaster):
     # COMPLETE
     def __init__(
@@ -56,6 +92,8 @@ class Session(Broadcaster):
         total_bet: Optional[float] = None,
         owner: Optional[UUID4] = None,
         data: Optional[dict] = None,
+        side_pots: List[SidePot] = [],
+        main_pot: float = 0.0
     ) -> None:
         super().__init__(players)
         self.max_players: int = max_players or settings.DEFAULT_MAX_PLAYERS
@@ -75,6 +113,8 @@ class Session(Broadcaster):
         self.owner: Optional[UUID4] = owner
         self.deck: Deck = Deck()
         self.chat: Chat = Chat(session_id=self.id)
+        self.side_pots: List[SidePot] = side_pots
+        self.main_pot = main_pot
         seats_dict = [str(seat) for seat in self.seats]
         if data is None:
             self.data = {
@@ -92,7 +132,9 @@ class Session(Broadcaster):
                 "current_bet": self.current_bet,
                 "total_bet": self.total_bet,
                 "owner": str(self.owner) if self.owner is not None else None,
-                "chat": self.chat.list
+                "chat": self.chat.list,
+                "side_pots": [side_pot.dict() for side_pot in self.side_pots],
+                "main_pot": self.main_pot
             }
         else:
             self.data = data
@@ -115,7 +157,9 @@ class Session(Broadcaster):
         current_bet: Optional[float] = None,
         total_bet: Optional[float] = None,
         owner: Optional[UUID4] = None,
-        data: Optional[dict] = None
+        data: Optional[dict] = None,
+        side_pots: List[SidePot] = [],
+        main_pot: int = 0.0
     ) -> "Session":
         """creates new Session object
 
@@ -156,6 +200,8 @@ class Session(Broadcaster):
             total_bet=total_bet,
             owner=owner,
             data=data,
+            side_pots=side_pots,
+            main_pot=main_pot
         )
         await session.save()
         return session
@@ -197,8 +243,11 @@ class Session(Broadcaster):
         self.current_bet = data["current_bet"]
         self.total_bet = data["total_bet"]
         self.owner = UUID(data["owner"]) if data["owner"] != "None" else None
+        self.main_pot = data["main_pot"]
+        player_ids = [UUID(player_data["id"]) for player_data in data["players"]]
+        self.side_pots: List[SidePot] = [SidePot.from_dict(data=pot, players=player_ids) for pot in data["side_pots"]]
         for player_data in data["players"]:
-            player = self.get_player(player_id=player_data["id"])
+            player = self.get_player(player_id=UUID(player_data["id"]))
             if player is not None:
                 player.name = player["name"]
                 player.balance = player["balance"]
@@ -324,6 +373,33 @@ class Session(Broadcaster):
             "type": "success",
             "message": f"player's seat: {seat_num}"
         }
+    
+    async def handle_all_in(self, player: Player):
+        new_side_pot = SidePot()
+        bet_amount = await player._bet(player.balance)
+        new_side_pot.add_bet(bet_amount, player)
+        self.side_pots.append(new_side_pot)
+
+    async def distribute_winnings(self) -> None:
+        winners = await self.get_winners()
+
+        # Distribute the main pot
+        main_pot_winnings = self.main_pot / len(winners)
+        for winner in winners:
+            player = await self._get_player_by_index(index=winner)
+            player.balance += main_pot_winnings
+
+        # Distribute side pots
+        for side_pot in self.side_pots:
+            side_pot_winnings = side_pot.distribute(winners)
+            for player_id, winnings in side_pot_winnings.items():
+                player = self.get_player(player_id=player_id)
+                player.balance += winnings
+
+        # Reset pots after distribution
+        self.main_pot = 0
+        self.side_pots = []
+        await self.save()
         
     async def start_game(self) -> dict:
         data = await self.get_data()
@@ -382,9 +458,16 @@ class Session(Broadcaster):
                 "message": "now is not this user move"
             }
         player = self.get_player(player_id=player_id)
-        total_value = await player._bet(value)
-        self.total_bet += total_value
-        self.current_bet += total_value
+        if value >= player.balance:
+            value = player.balance
+            new_side_pot = SidePot()
+            bet_amount = await player._bet(player.balance)
+            new_side_pot.add_bet(bet_amount, player)
+            self.side_pots.append(new_side_pot)
+        else:
+            total_value = await player._bet(value)
+            self.main_pot += total_value
+            self.current_bet += total_value
         await self.save()
         next_player_index = await self._get_next_busy_seat(player.id)
         self.current_player = next_player_index
@@ -405,8 +488,17 @@ class Session(Broadcaster):
                 "message": "now is not this user move"
             }
         player = self.get_player(player_id=player_id)
-        delta = await player._call(bet=self.current_bet)
-        self.total_bet += delta
+        if self.current_bet >= player.balance:
+            new_side_pot = SidePot()
+            call_amount = await player._call(self.current_bet)
+            new_side_pot.add_bet(call_amount, player)
+            self.side_pots.append(new_side_pot)
+        else:
+            total_value = await player._call(self.current_bet)
+            self.main_pot += total_value
+            self.total_bet += total_value
+        # delta = await player._call(bet=self.current_bet)
+        # self.total_bet += delta
         await self.save()
         next_player_index = await self._get_next_busy_seat(player.id)
         self.current_player = next_player_index
@@ -427,9 +519,20 @@ class Session(Broadcaster):
                 "message": "now is not this user move"
             }
         player = self.get_player(player_id=player_id)
-        delta = await player._raise(value=value)
-        self.total_bet += delta
-        self.current_bet = player.currentbet
+        if value >= player.balance:
+            value = player.balance
+            new_side_pot = SidePot()
+            bet_amount = await player._raise(value)
+            new_side_pot.add_bet(bet_amount, player)
+            self.side_pots.append(new_side_pot)
+        else:
+            total_value = await player._raise(value)
+            self.main_pot += total_value
+            self.total_bet += total_value
+            self.current_bet += total_value
+        # delta = await player._raise(value=value)
+        # self.total_bet += delta
+        # self.current_bet = player.currentbet
         await self.save()
         next_player_index = await self._get_next_busy_seat(player.id)
         self.current_player = next_player_index
@@ -581,6 +684,7 @@ class Session(Broadcaster):
 
         if self.stage == SessionStage.SHOWDOWN:
             winners = await self.get_winners()
+            await self.distribute_winnings()
 
             return {
                 "type": "success",
