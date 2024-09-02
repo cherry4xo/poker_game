@@ -132,7 +132,7 @@ class Session(Broadcaster):
                 "current_bet": self.current_bet,
                 "total_bet": self.total_bet,
                 "owner": str(self.owner) if self.owner is not None else None,
-                "chat": self.chat.list,
+                "chat": [],
                 "side_pots": [side_pot.dict() for side_pot in self.side_pots],
                 "main_pot": self.main_pot
             }
@@ -249,11 +249,11 @@ class Session(Broadcaster):
         for player_data in data["players"]:
             player = self.get_player(player_id=UUID(player_data["id"]))
             if player is not None:
-                player.name = player["name"]
-                player.balance = player["balance"]
-                player.hand = dict_to_pokerhand(player["hand"])
-                player.currentbet = player["currentbet"]
-                player.status = PlayerStatus(data['status'])
+                player.name = player_data["name"]
+                player.balance = player_data["balance"]
+                player.hand = dict_to_pokerhand(player_data["hand"])
+                player.currentbet = player_data["currentbet"]
+                player.status = PlayerStatus(player_data['status'])
         return data    
 
     async def set_data(self, data: dict) -> None:
@@ -352,8 +352,10 @@ class Session(Broadcaster):
                 "dealer": self.dealer,
                 "current_bet": self.current_bet,
                 "total_bet": self.total_bet,
-                "messages": self.chat.list,
-                "owner": str(self.owner)
+                "messages": await self.chat.list,
+                "owner": str(self.owner),
+                "main_pot": self.main_pot,
+                "side_pots": [side_pot.dict() for side_pot in self.side_pots],
             }
         await self.set_data(data=self.data)
 
@@ -679,6 +681,7 @@ class Session(Broadcaster):
                 
         self.current_bet = 0.0
         self.stage = SessionStage((self.stage.value + 1) % 5)
+        print(self.stage)
         self.current_player = self.dealer
         await self.save()
 
