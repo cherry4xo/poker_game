@@ -1,8 +1,10 @@
+from typing import Type
 import os
 import uuid
 import logging
 
 from tortoise.contrib.fastapi import register_tortoise
+from tortoise import Model
 from aerich import Command
 from fastapi import FastAPI
 
@@ -34,7 +36,7 @@ def register_db(app: FastAPI, db_url: str = None) -> None:
         app,
         db_url=db_url,
         modules={"models": app_list},
-        generate_schemas=True,
+        generate_schemas=False,
         add_exception_handlers=True
     )
 
@@ -48,7 +50,7 @@ async def upgrade_db(app: FastAPI, db_url: str = None):
 
 
 async def init(app: FastAPI):
-    # await upgrade_db(app)
+    await upgrade_db(app)
     register_db(app)
     logger.debug("Connected to db")
     await ping_redis_connection(r)

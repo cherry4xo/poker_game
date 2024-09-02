@@ -34,6 +34,7 @@ app.router.lifespan_context = lifespan_wrapper
 
 init_middlewares(app)
 app.include_router(login_router, prefix="/login", tags=["login"])
+print(settings.DB_URL)
 
 # if __name__ == "__main__":
 #     uvicorn.run(app, host=settings.API_HOST, port=int(settings.API_PORT))
