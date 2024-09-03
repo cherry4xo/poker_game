@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.9" 
 name: "poker"
 
 services:
@@ -36,16 +36,16 @@ services:
       - 5432
     volumes:
       - "users-postgres:/data/db"
-  # game: 
-  #   build: ./services/game
-  #   restart: unless-stopped
-  #   ports:
-  #     - "8081:8083"
-  #   links:
-  #     - redis
-  #     - auth
-  #     - users-postgres
-  #   command: python3 -u -m uvicorn main:app --host 0.0.0.0 --port 8083
+  game: 
+    build: ./services/game
+    restart: unless-stopped
+    ports:
+      - "8081:8083"
+    links:
+      - redis
+      - auth
+      - users-postgres
+    command: python3 -u -m uvicorn main:app --host 0.0.0.0 --port 8083
   redis:
     image: redis:alpine
     restart: unless-stopped
