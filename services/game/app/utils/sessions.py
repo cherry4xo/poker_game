@@ -377,10 +377,12 @@ class Session(Broadcaster):
         }
     
     async def handle_all_in(self, player: Player):
+        await self.get_data()
         new_side_pot = SidePot()
         bet_amount = await player._bet(player.balance)
         new_side_pot.add_bet(bet_amount, player)
         self.side_pots.append(new_side_pot)
+        await self.save()
 
     async def distribute_winnings(self) -> None:
         winners = await self.get_winners()
