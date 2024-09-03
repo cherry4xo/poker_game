@@ -4,6 +4,7 @@ import { Button, FormControl, FormErrorMessage, Input, useToast, VStack } from '
 import { useState } from 'react';
 import { useApi } from '@/hooks';
 import { ISignup } from '@/utils/types';
+import { useSelector } from '@/redux/hooks';
 
 const aliases = {
     username: 'Никнейм',
@@ -18,6 +19,7 @@ export function AuthForm({ login }: { login?: boolean }) {
     const toast = useToast();
     const [loading, setLoading] = useState<boolean>(false);
     const api = useApi();
+    const { device } = useSelector(state => state.misc);
 
     return <Formik
         initialValues={{
@@ -40,7 +42,7 @@ export function AuthForm({ login }: { login?: boolean }) {
             if (!ok) setLoading(false);
         }}
     >
-        {({ handleSubmit, errors, touched }) => <form style={{ width: '25%' }} onSubmit={handleSubmit}>
+        {({ handleSubmit, errors, touched }) => <form style={{ width: device !== 'phone' ? '25%' : '80%' }} onSubmit={handleSubmit}>
             <VStack w='100%' spacing='8px' align='start'>
                 {(login ? ['username', 'password'] : ['username', 'email', 'password', 'repeatedPassword']).map((field: string, i: number) =>
                     <FormControl key={i} isInvalid={!!errors[field as keyof typeof errors] && !!touched[field as keyof typeof errors]}>
@@ -51,11 +53,13 @@ export function AuthForm({ login }: { login?: boolean }) {
                             id={field}
                             name={field}
                             placeholder={aliases[(login ? (field === 'username' ? 'email' : field) : field) as IAlias]}
-                            // validate={(value: string) => {
-                            //     let error;
-                            //     if (value.length !== 10) error = 'Номер телефона должен быть без кода страны';
-                            //     return error;
-                            // }}
+                            validate={(value: string) => {
+                                let error;
+                                if (!login && field === 'username') {
+                                    if (value.length < 5 || value.length > 10) error = 'Никнейм должен быть от 5 до 10 символов длиной';
+                                }
+                                return error;
+                            }}
                         />
 
                         <FormErrorMessage>{errors[field as keyof typeof errors]?.toString()}</FormErrorMessage>

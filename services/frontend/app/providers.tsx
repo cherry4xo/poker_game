@@ -1,9 +1,12 @@
 'use client';
 import { CacheProvider } from '@chakra-ui/next-js';
-import { ChakraProvider, extendTheme } from '@chakra-ui/react';
+import { ChakraProvider, createMultiStyleConfigHelpers, defineStyleConfig, extendTheme } from '@chakra-ui/react';
 import { Provider } from '@/redux/provider';
 import '@fontsource-variable/manrope';
 import { SocketContextProvider } from '@/app/SocketContext';
+import { inputAnatomy } from '@chakra-ui/anatomy';
+
+const { definePartsStyle, defineMultiStyleConfig } = createMultiStyleConfigHelpers(inputAnatomy.keys);
 
 export function Providers({ children }: { children: React.ReactNode }) {
     return <Provider>
@@ -16,6 +19,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     main: {
                         100: '#000000'
                     }
+                },
+                components: {
+                    Button: defineStyleConfig({
+                        baseStyle: {
+                            rounded: '15px'
+                        }
+                    }),
+                    Input: defineMultiStyleConfig({
+                        baseStyle: definePartsStyle({
+                            field: {
+                                rounded: '15px'
+                            }
+                        })
+                    })
                 }
             })}>
                 <SocketContextProvider>

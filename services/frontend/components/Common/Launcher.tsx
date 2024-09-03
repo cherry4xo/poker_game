@@ -33,7 +33,7 @@ export function Launcher() {
     return <>
         <motion.div
             key={pathname}
-            style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 10000, background: 'black', pointerEvents: 'none' }}
+            style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 10000, background: '#181c1f', pointerEvents: 'none' }}
             initial={{ opacity: 1 }}
             animate={{ opacity: device === null ? 1 : 0 }}
             transition={{ duration: .5, ease }}

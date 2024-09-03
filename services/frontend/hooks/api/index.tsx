@@ -25,7 +25,6 @@ export function useApi() {
             { method: Method, url: string, body?: any, headers?: any, onSuccess?: (data: any) => void }
     ) => {
         const auth = await getAuth();
-        // const auth = { token_type: '', refresh_token: '', access_token: '' };
 
         try {
             const Authorization = !!auth.token_type ? `${auth.token_type.charAt(0).toUpperCase() + auth.token_type.slice(1)} ${auth.access_token}` : '';
@@ -46,11 +45,9 @@ export function useApi() {
             // @ts-ignore
             const code = err?.status ?? 401;
 
-            if (['Could not validate credentials', 'Not authenticated'].includes(detail) || code === 401) {
+            if (code === 401) {
                 if (pathname !== '/') signout();
-            }
-
-            toast({
+            } else toast({
                 status: 'error',
                 duration: 3000,
                 title: 'Error',
@@ -85,8 +82,13 @@ export function useApi() {
         method: 'post',
         url: '/poker_users/users',
         body: payload,
-        async onSuccess() {
-            await signin({ username: payload.email, password: payload.password, email: '', repeatedPassword: '' });
+        onSuccess() {
+            window.location.reload();
+            toast({
+                status: 'success',
+                title: 'Успешно',
+                description: 'Вы зарегистрированы!'
+            });
         }
     }), []);
 
@@ -131,6 +133,7 @@ export function useApi() {
 
         socket.onmessage = e => {
             const data = JSON.parse(JSON.parse(e.data));
+            console.log(new Date().toLocaleTimeString('ru-RU'), data);
 
             function scrollChat() {
                 setTimeout(() => {
