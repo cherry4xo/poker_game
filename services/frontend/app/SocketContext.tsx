@@ -10,4 +10,8 @@ export function SocketContextProvider({ children }: { children: React.ReactNode 
     </SocketContext.Provider>;
 }
 
-export const useWs = useContext(SocketContext);
+export function useWs() {
+    const context = useContext(SocketContext);
+    if (!context) throw new Error('Use app context within provider!');
+    return context;
+}

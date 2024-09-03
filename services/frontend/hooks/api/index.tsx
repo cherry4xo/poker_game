@@ -48,15 +48,14 @@ export function useApi() {
 
             if (['Could not validate credentials', 'Not authenticated'].includes(detail) || code === 401) {
                 if (pathname !== '/') signout();
-            } else {
-                console.error(err);
-                toast({
-                    status: 'error',
-                    duration: 3000,
-                    title: 'Error',
-                    description: detail
-                });
             }
+
+            toast({
+                status: 'error',
+                duration: 3000,
+                title: 'Error',
+                description: detail
+            });
 
             return false;
         }
