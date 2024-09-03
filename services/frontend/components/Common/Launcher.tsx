@@ -5,11 +5,13 @@ import { motion } from 'framer-motion';
 import { ease } from '@/utils/misc';
 import { useEffect } from 'react';
 import { useApi } from '@/hooks';
+import { usePathname } from 'next/navigation';
 
 export function Launcher() {
     const dispatch = useDispatch();
     const { device } = useSelector(({ misc }) => misc);
     const { validate } = useApi();
+    const pathname = usePathname();
 
     useEffect(() => {
         function launch() {
@@ -30,10 +32,11 @@ export function Launcher() {
 
     return <>
         <motion.div
+            key={pathname}
             style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 10000, background: 'black', pointerEvents: 'none' }}
             initial={{ opacity: 1 }}
             animate={{ opacity: device === null ? 1 : 0 }}
-            transition={{ duration: 0.3, ease }}
+            transition={{ duration: .5, ease }}
         />
     </>;
 }

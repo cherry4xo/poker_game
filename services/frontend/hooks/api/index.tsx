@@ -131,9 +131,21 @@ export function useApi() {
 
         socket.onmessage = e => {
             const data = JSON.parse(JSON.parse(e.data));
-            if (data?.type === 'chat_history') dispatch(setChatHistory(data.payload));
-            else if (data?.type === 'chat_incoming') dispatch(addChatMsg(data.payload));
-            else dispatch(setGameState(data));
+
+            function scrollChat() {
+                setTimeout(() => {
+                    const objDiv = document.querySelector('#chatList');
+                    if (objDiv) objDiv.scrollTop = objDiv.scrollHeight;
+                }, 200);
+            }
+
+            if (data?.type === 'chat_history') {
+                dispatch(setChatHistory(data.payload));
+                scrollChat();
+            } else if (data?.type === 'chat_incoming') {
+                dispatch(addChatMsg(data.payload));
+                scrollChat();
+            } else dispatch(setGameState(data));
         };
 
         ws.current = socket;

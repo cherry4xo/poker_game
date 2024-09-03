@@ -1,34 +1,60 @@
 'use client';
-import { Button, HStack, Input, Text, VStack } from '@chakra-ui/react';
-import { useState } from 'react';
+import { HStack, IconButton, Input, Text, VStack } from '@chakra-ui/react';
+import { useCallback, useState } from 'react';
 import { useWs } from '@/app/SocketContext';
 import { useSelector } from '@/redux/hooks';
-import { IMessage } from '@/utils/types';
+import { IMessage, IPlayer } from '@/utils/types';
+import { IoSend } from 'react-icons/io5';
+import { animate } from 'framer-motion';
+import { colors, ease } from '@/utils/misc';
+import { FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 
 export function ChatBlock() {
     const ws = useWs();
     const [text, setText] = useState('');
     const { chat } = useSelector(state => state.misc);
+    const { seats } = useSelector(state => state.game);
+    const [opened, setOpened] = useState(true);
 
-    return <VStack p='20px' rounded='10px'>
-        <VStack w='100%'>
+    const send = useCallback(() => {
+        if (text.length <= 0) return;
+        ws.current.send(JSON.stringify({ type: 'new_message', message: text }));
+        setText('');
+    }, [text, ws]);
+
+    return <VStack w='370px' p='14px' spacing='14px' id='pablo' pos='relative' bg='gray.800'>
+        <VStack w='100%' maxH='110px' pb='10px' overflowY='auto' id='chatList'>
             {chat.map((msg: IMessage, i: number) => <HStack key={i} w='100%' justify='start' spacing='10px'>
-                <Text opacity={.5}>{msg.datetime}</Text>
-                <Text color='orange'>{msg.username}</Text>
+                <Text opacity={.3}>{msg.datetime}</Text>
+                <Text color={colors[seats.indexOf(msg.player_id)]}>{msg.username}</Text>
                 <Text>{msg.text}</Text>
             </HStack>)}
         </VStack>
 
-        <HStack w='100%' opacity={.75}>
-            <Input placeholder='Сообщение' value={text} onChange={(e: any) => {
-                if (e.target.value.length <= 100) setText(e.target.value);
-            }} />
-            <Button
-                onClick={() => {
-                    ws.current.send(JSON.stringify({ type: 'new_message', message: text }));
-                    setText('');
+        <HStack w='100%' opacity={.75} spacing={0}>
+            <Input
+                rounded='200px 0 0 200px' borderColor='gray.400'
+                onKeyDown={(e: any) => {
+                    if (e.code === 'Enter') send();
                 }}
-            >Send</Button>
+                value={text}
+                onChange={(e: any) => {
+                    if (e.target.value.length <= 100) setText(e.target.value);
+                }}
+            />
+
+            <IconButton
+                aria-label='send'
+                icon={<IoSend />}
+                rounded='0 200px 200px 0'
+                isDisabled={text.length <= 0}
+                onClick={send}
+            />
         </HStack>
+
+        <IconButton aria-label='open chat' icon={opened ? <FaAngleLeft /> : <FaAngleRight />} colorScheme='blackAlpha' rounded='0 25px 0 0' border='1px solid rgba(0,0,0,.75)' h='100%' pos='absolute' bottom='0%' right='-40px' onClick={() => {
+            animate('#pablo', { x: opened ? -370 : 0 }, { duration: 0.5, ease });
+            setOpened(s => !s);
+        }} />
     </VStack>;
 }
