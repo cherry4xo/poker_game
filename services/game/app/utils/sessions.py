@@ -561,6 +561,17 @@ class Session(Broadcaster):
         self.seats[user_seat] = None
         await self.save()
 
+        count_players = sum([seat is not None for seat in self.seats])
+        if count_players < 2:
+            winners = await self.get_winners()
+            await self.distribute_winnings()
+
+            return {
+                "type": "success",
+                "message": "ends",
+                "winners": winners
+            }
+
         return {
             "type": "success",
             "message": "user passed",

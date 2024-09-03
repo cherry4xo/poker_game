@@ -105,7 +105,13 @@ async def webscoket_endpoint(
                 await session.send_all_data(session.data)
             elif data["type"] == "pass":
                 ans = await session.pass_board(player_id=user_id)
-                await session.send_all_data(session.data)
+                if ans["message"] == "ends":
+                    data = {}
+                    data.update(session.data)
+                    data.update({"winners": ans["winners"]})
+                    await session.send_all_data(data)
+                else:
+                    await session.send_all_data(session.data)
             elif data["type"] == "check":
                 ans = await session.check(player_id=user_id)
                 if ans["message"] == "ends":
