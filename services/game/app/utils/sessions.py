@@ -352,7 +352,7 @@ class Session(Broadcaster):
                 "dealer": self.dealer,
                 "current_bet": self.current_bet,
                 "total_bet": self.total_bet,
-                "messages": await self.chat.list,
+                "messages": await self.chat.list(),
                 "owner": str(self.owner),
                 "main_pot": self.main_pot,
                 "side_pots": [side_pot.dict() for side_pot in self.side_pots],

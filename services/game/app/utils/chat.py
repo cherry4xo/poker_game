@@ -56,7 +56,6 @@ class Chat:
                 message_objects.append(message_obj)
             return message_objects
 
-    @property
     async def list(self) -> dict:
         messages = await self.get_all_messages()
         return [message.__str__() for message in messages]
