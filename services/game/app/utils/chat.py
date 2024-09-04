@@ -45,7 +45,6 @@ class Chat:
     async def get_all_messages(self):
         async with r.pipeline(transaction=True) as pipe:
             messages = (await (pipe.lrange(f"message:{self.session_id}", 0, -1).execute()))[0]
-            print(messages)
             message_objects = []
             for message in messages:
                 message_str = message.split("::")

@@ -437,6 +437,7 @@ class Session(Broadcaster):
         await dealer._bet(self.small_blind)
         self.total_bet += self.small_blind
         self.current_bet = self.small_blind
+        self.main_pot += self.small_blind
         await self.save()
         next_player_index = await self._get_next_busy_seat(dealer.id)
         next_player_id = self.seats[next_player_index]
@@ -444,6 +445,7 @@ class Session(Broadcaster):
         await next_player._bet(self.big_blind)
         self.total_bet += self.big_blind
         self.current_bet = self.big_blind
+        self.main_pot += self.big_blind
         self.current_player = next_player_index
         await self.save()
 
@@ -468,10 +470,12 @@ class Session(Broadcaster):
             bet_amount = await player._bet(player.balance)
             new_side_pot.add_bet(bet_amount, player)
             self.side_pots.append(new_side_pot)
+            self.total_bet += bet_amount
         else:
             total_value = await player._bet(value)
             self.main_pot += total_value
             self.current_bet += total_value
+            self.total_bet += total_value
         await self.save()
         next_player_index = await self._get_next_busy_seat(player.id)
         self.current_player = next_player_index
@@ -497,10 +501,12 @@ class Session(Broadcaster):
             call_amount = await player._call(self.current_bet)
             new_side_pot.add_bet(call_amount, player)
             self.side_pots.append(new_side_pot)
+            self.total_bet += call_amount
         else:
             total_value = await player._call(self.current_bet)
             self.main_pot += total_value
             self.total_bet += total_value
+            self.current_bet += total_value
         # delta = await player._call(bet=self.current_bet)
         # self.total_bet += delta
         await self.save()
@@ -529,6 +535,7 @@ class Session(Broadcaster):
             bet_amount = await player._raise(value)
             new_side_pot.add_bet(bet_amount, player)
             self.side_pots.append(new_side_pot)
+            self.total_bet
         else:
             total_value = await player._raise(value)
             self.main_pot += total_value
@@ -565,6 +572,8 @@ class Session(Broadcaster):
         if count_players < 2:
             winners = await self.get_winners()
             await self.distribute_winnings()
+
+            await self.end_game()
 
             return {
                 "type": "success",
@@ -694,13 +703,14 @@ class Session(Broadcaster):
                 
         self.current_bet = 0.0
         self.stage = SessionStage((self.stage.value + 1) % 5)
-        print(self.stage)
         self.current_player = self.dealer
         await self.save()
 
         if self.stage == SessionStage.SHOWDOWN:
             winners = await self.get_winners()
             await self.distribute_winnings()
+
+            await self.end_game()
 
             return {
                 "type": "success",
@@ -713,6 +723,24 @@ class Session(Broadcaster):
             "message": "checked",
             "data": self.data
         }
+    
+    async def end_game(self) -> None:
+        self.stage = SessionStage.PREFLOP
+        self.status = SessionStatus.LOBBY
+
+        self.board = Hand()
+        self.current_player = 0
+        self.dealer = 0
+        self.current_bet = 0.0
+        self.total_bet = 0.0
+        self.main_pot = 0.0
+        self.side_pots: List[SidePot] = []
+        for player in self.players:
+            player.hand = Hand()
+            player.currentbet = 0.0
+            player.status = PlayerStatus.NOT_READY
+
+        await self.save()
     
     async def send_chat_message(self, player_id: UUID4, message: str) -> None:
         player = self.get_player(player_id=player_id)
