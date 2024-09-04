@@ -1,7 +1,8 @@
 export enum SessionStatus {
     LOBBY = 1,
     GAME = 2,
-    PAUSED = 3
+    PAUSED = 3,
+    END = 4
 }
 
 export enum SessionStage {

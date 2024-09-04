@@ -21,6 +21,7 @@ export interface IGame {
     dealer: null;
     current_bet: null;
     total_bet: null;
+    winners?: number[];
 }
 
 export interface IPlayer {

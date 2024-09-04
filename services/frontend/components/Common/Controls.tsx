@@ -2,7 +2,7 @@
 import { Button, HStack } from '@chakra-ui/react';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
-import { useWs } from '@/app/SocketContext';
+import { useWs } from '@/app/contexts/SocketContext';
 import { SessionStatus } from '@/utils/enums';
 
 export function Controls() {
@@ -20,9 +20,9 @@ export function Controls() {
             { label: 'Start', color: 'yellow', payload: { type: 'start' } }
         ],
         [
-            // { label: 'Bet ' + toSupport, color: 'teal', payload: { type: 'bet', value: toSupport } },
+            { label: `Бет (${toSupport})`, color: 'teal', payload: { type: 'bet', value: toSupport } },
             { label: 'Колл', color: 'teal', payload: { type: 'call' } },
-            { label: 'Рейз', color: 'teal', payload: { type: 'raise', value: toSupport } },
+            { label: `Рейз (${toSupport})`, color: 'teal', payload: { type: 'raise', value: toSupport } },
             { label: 'Пасс', color: 'red', payload: { type: 'pass' } },
             { label: 'Чек', color: 'red', payload: { type: 'check' } }
         ]

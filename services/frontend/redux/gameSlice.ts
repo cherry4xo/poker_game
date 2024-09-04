@@ -4,15 +4,13 @@ import { IGame } from '@/utils/types';
 import { SessionStage, SessionStatus } from '@/utils/enums';
 
 const initialState: IGame = {
-    "id": "111",
+    "id": "",
     "status": SessionStatus.LOBBY,
-    "seats": [
-        null, null, null, null
-    ],
-    "owner": "me",
-    "small_blind": 10,
-    "big_blind": 20,
-    "max_players": 4,
+    "seats": [null, null, null, null],
+    "owner": "",
+    "small_blind": 0,
+    "big_blind": 0,
+    "max_players": 0,
     "players": [],
     "stage": SessionStage.PREFLOP,
     "board": {
@@ -34,6 +32,14 @@ export const gameSlice = createSlice({
     reducers: {
         setGameState: (state, action: PayloadAction<IGame>) => {
             const res = structuredClone(action.payload);
+
+            // #winnerskostyl
+            // remove at all, should be on backend
+            if (!!res.winners) {
+                res.seats = state.seats;
+                res.status = 4;
+            }
+
             res.seats = res.seats.map((s: string) => (s === 'None' ? null : s));
             Object.assign(state, res);
         }

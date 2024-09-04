@@ -1,15 +1,16 @@
 import { Box, Flex, FlexProps, HStack, Icon, Input, StackProps, Text, VStack } from '@chakra-ui/react';
-import { colors, positions } from '@/utils/misc';
+import { colors, ease, positions } from '@/utils/misc';
 import { ChatBlock, Controls, Header } from '@/components/Common';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
 import { PlayerStatus, SessionStatus } from '@/utils/enums';
-import { useWs } from '@/app/SocketContext';
 // @ts-ignore
 import * as deck from '@letele/playing-cards';
 import { FaUser } from 'react-icons/fa';
 import { RiCoinFill } from 'react-icons/ri';
 import { Fragment } from 'react';
+import { useWs } from '@/app/contexts';
+import { motion } from 'framer-motion';
 
 const PlayerLabelStyles: StackProps = {
     w: 'max-content',
@@ -20,7 +21,7 @@ const PlayerLabelStyles: StackProps = {
     align: 'center'
 };
 
-function Card({ data }: { data: { rank: string, suit: string } | undefined }) {
+function Card({ data, i }: { data: { rank: string, suit: string } | undefined, i: number }) {
     let TheCard = deck.B1;
 
     if (!!data) {
@@ -29,7 +30,17 @@ function Card({ data }: { data: { rank: string, suit: string } | undefined }) {
         TheCard = deck[`${suit}${rank}`] ?? deck.B2;
     }
 
-    return <TheCard style={{ width: '100%', height: '100%' }} />;
+    const fill = { width: '100%', height: '100%' };
+
+    return <motion.div
+        key={TheCard}
+        style={fill}
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1 * i, duration: .5, ease }}
+    >
+        <TheCard style={fill} />
+    </motion.div>;
 }
 
 function Sum({ children, color }: any) {
@@ -41,19 +52,18 @@ function Sum({ children, color }: any) {
 
 export default function Game() {
     const game = useSelector(state => state.game);
-    const { user } = useSelector(state => state.misc);
+    const { user, href, device } = useSelector(state => state.misc);
     const ws = useWs();
 
-    return <Flex pos='relative' w='60vw' h='50vh' border='36px solid black' bg='#063605' rounded='full' justify='center' align='center'>
+    return <Flex pos='relative' w={device !== 'phone' ? '60vw' : '90vw'} h={device !== 'phone' ? '50vh' : '70svh'} border='36px solid black' bg='#063605' rounded='full' justify='center' align='center'>
         <Box w='100%' pos='fixed' top={0} left={0} p='20px'><Header /></Box>
         <Box w='95%' h='90%' pos='absolute' top={0} left={0} transform='translate(2.5%, 5%)' rounded='full' border='2px solid black' />
         {game.seats.includes(user?.uuid) && <Box pos='fixed' bottom={0} left={0}><ChatBlock /></Box>}
         {game.players.length >= 2 && <Box pos='fixed' bottom='30px' right='30px'><Controls /></Box>}
 
-        <VStack spacing={0} align='end' fontSize='12px' pos='fixed' top={0} right={0} p='10px' opacity={.5}>
-            <Text>game_id: {game.id}</Text>
+        <VStack spacing={0} align='end' fontSize='12px' pos='fixed' top={0} right={0} p='10px'>
             <Text>user_id: {user?.uuid}</Text>
-            <Text id='wsstatus'>disconnected</Text>
+            <Text id='wsstatus' color='red'>disconnected</Text>
         </VStack>
 
         {Array.from({ length: game.seats.length }, (_: any, i: number) => {
@@ -105,6 +115,10 @@ export default function Game() {
                     {player ? <>
                         {game.dealer === i && <Text pos='absolute' bottom='14px' right='11px'>d</Text>}
 
+                        <Box pos='absolute' bottom={-8} right={0}>
+                            <Sum color='orange'>{player.balance}</Sum>
+                        </Box>
+
                         <Text w='max-content' color={colors[i]} fontSize='18px'>
                             {player.name}
                             <Text as='span' color='gray' opacity='.5'>{player.id === user?.uuid && ' (вы)'}</Text>
@@ -119,7 +133,7 @@ export default function Game() {
                         </HStack>}
 
                         {player.id === user?.uuid && <HStack w='90px' h='60px' spacing='4px' pos='absolute' top='-70px'>
-                            {player.hand.cards.map((card: any, i: number) => <Card key={i} data={card} />)}
+                            {player.hand.cards.map((card: any, i: number) => <Card key={i} i={i} data={card} />)}
                         </HStack>}
                     </> : <Text>занять</Text>}
                 </HStack>
@@ -128,13 +142,13 @@ export default function Game() {
 
         <VStack w='100%' spacing='12px'>
             <HStack spacing='10px' h='100px'>
-                {game.board.cards.map((card: any, i: number) => <Card key={i} data={card} />)}
+                {game.board.cards.map((card: any, i: number) => <Card key={i} i={i} data={card} />)}
             </HStack>
 
             {game.status === SessionStatus.LOBBY
                 ? <>
                     <Text>Ожидаем игроков...</Text>
-                    <Input w='50%' opacity={.75} onFocus={(e: any) => e.target.select()} value={'http://217.28.221.254:33010/join/' + game.id} />
+                    <Input w='50%' opacity={.75} onFocus={(e: any) => e.target.select()} readOnly value={`${href}/join/${game.id}`} />
                     <Text fontSize='13px' opacity={.75}>Скопируйте и отправьте друзьям ссылку на игру!</Text>
                 </>
                 : <HStack spacing='50px'>

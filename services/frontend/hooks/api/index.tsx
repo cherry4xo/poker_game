@@ -1,24 +1,25 @@
 'use client';
 import axios, { Method } from 'axios';
 import { useToast } from '@chakra-ui/react';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { ISignup, IUser } from '@/utils/types';
-import { useWs } from '@/app/SocketContext';
+import { useWs } from '@/app/contexts/SocketContext';
 import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
 import { addChatMsg, setChatHistory, setLoading, setUser } from '@/redux/miscSlice';
 import { deleteAuth, getAuth, setAuth } from './cookiesStore';
 import { usePathname } from 'next/navigation';
+import { useWinnersModal } from '@/app/contexts';
 
-const api = axios.create({
-    baseURL: 'https://api.cherry4xo.ru'
-});
+const api = axios.create({ baseURL: 'https://api.cherry4xo.ru' });
 
 export function useApi() {
     const toast = useToast();
     const dispatch = useDispatch();
     const pathname = usePathname();
     const ws = useWs();
+    const { onOpen } = useWinnersModal();
+    const [retries, setRetries] = useState(0);
 
     const exec = useCallback(async (
         { method, url, body = {}, headers = {}, onSuccess }:
@@ -121,14 +122,29 @@ export function useApi() {
         const auth = await getAuth();
         const socket = new WebSocket(`wss://api.cherry4xo.ru/poker_game/game/${auth.access_token}`);
 
-        const pStatus = document.querySelector('#wsstatus');
+        function setWsStatus(state: number) {
+            const pws = document.querySelector('#wsstatus') as unknown as any;
+            if (!pws) return;
 
-        socket.onopen = () => {
-            if (pStatus) pStatus.innerHTML = 'connected';
+            const data = [['connecting', 'yellow'], ['open', 'green'], ['closing', 'orange'], ['closed', 'red']];
+
+            pws.innerHTML = data[state][0];
+            pws.style.color = data[state][1];
+        }
+
+        socket.onopen = (e: any) => {
+            setWsStatus(e.target.readyState);
         };
-        socket.onclose = () => {
-            if (pStatus) pStatus.innerHTML = 'disconnected';
-            setTimeout(connect, 1000);
+        socket.onclose = (e: any) => {
+            setWsStatus(e.target.readyState);
+
+            if (retries <= 3) {
+                setRetries(s => s + 1);
+                setTimeout(connect, 1000);
+            } else {
+                dispatch({ type: 'misc/clearUserSession' });
+                window.location.replace('/');
+            }
         };
 
         socket.onmessage = e => {
@@ -146,9 +162,16 @@ export function useApi() {
                 dispatch(setChatHistory(data.payload));
                 scrollChat();
             } else if (data?.type === 'chat_incoming') {
+                new Audio('/tone3.mp3').play();
                 dispatch(addChatMsg(data.payload));
                 scrollChat();
-            } else dispatch(setGameState(data));
+            } else {
+                // #winnerskostyl
+                // if (data.status === SessionStatus.END) onOpen();
+                if (!!data.winners) onOpen();
+
+                dispatch(setGameState(data));
+            }
         };
 
         ws.current = socket;

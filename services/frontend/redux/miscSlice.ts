@@ -7,13 +7,15 @@ interface MiscState {
     user: IUser | null;
     loading: any;
     chat: IMessage[];
+    href: string;
 }
 
 const initialState: MiscState = {
     device: null,
     user: null,
     loading: {},
-    chat: []
+    chat: [],
+    href: ''
 };
 
 function decryptMsg(msg: string): IMessage {
@@ -46,9 +48,12 @@ export const miscSlice = createSlice({
         },
         addChatMsg: (state, action: PayloadAction<string>) => {
             state.chat.push(decryptMsg(action.payload));
+        },
+        setHref: (state, action: PayloadAction<string>) => {
+            state.href = action.payload;
         }
     }
 });
 
-export const { setDevice, setUser, setLoading, setChatHistory, addChatMsg } = miscSlice.actions;
+export const { setDevice, setUser, setLoading, setChatHistory, addChatMsg, setHref } = miscSlice.actions;
 export default miscSlice.reducer;

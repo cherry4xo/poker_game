@@ -3,7 +3,7 @@ import { CacheProvider } from '@chakra-ui/next-js';
 import { ChakraProvider, createMultiStyleConfigHelpers, defineStyleConfig, extendTheme } from '@chakra-ui/react';
 import { Provider } from '@/redux/provider';
 import '@fontsource-variable/manrope';
-import { SocketContextProvider } from '@/app/SocketContext';
+import { SocketContextProvider, WinnersModalProvider } from '@/app/contexts';
 import { inputAnatomy } from '@chakra-ui/anatomy';
 
 const { definePartsStyle, defineMultiStyleConfig } = createMultiStyleConfigHelpers(inputAnatomy.keys);
@@ -36,7 +36,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 }
             })}>
                 <SocketContextProvider>
-                    {children}
+                    <WinnersModalProvider>
+                        {children}
+                    </WinnersModalProvider>
                 </SocketContextProvider>
             </ChakraProvider>
         </CacheProvider>
