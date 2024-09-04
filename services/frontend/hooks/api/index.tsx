@@ -162,7 +162,7 @@ export function useApi() {
                 dispatch(setChatHistory(data.payload));
                 scrollChat();
             } else if (data?.type === 'chat_incoming') {
-                new Audio('/tone3.mp3').play();
+                // new Audio('/tone3.mp3').play();
                 dispatch(addChatMsg(data.payload));
                 scrollChat();
             } else {
