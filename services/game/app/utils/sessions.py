@@ -508,7 +508,6 @@ class Session(Broadcaster):
             total_value = await player._call(self.current_bet)
             self.main_pot += total_value
             self.total_bet += total_value
-            self.current_bet += total_value
         # delta = await player._call(bet=self.current_bet)
         # self.total_bet += delta
         await self.save()
