@@ -446,6 +446,7 @@ class Session(Broadcaster):
         self.total_bet += self.big_blind
         self.current_bet = self.big_blind
         self.main_pot += self.big_blind
+        next_player_index = await self._get_next_busy_seat(next_player.id)
         self.current_player = next_player_index
         await self.save()
 
