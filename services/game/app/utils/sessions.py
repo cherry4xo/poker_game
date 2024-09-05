@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from random import randint, choice
 from typing import List, Optional
 from operator import is_not
@@ -747,7 +748,8 @@ class Session(Broadcaster):
         player = self.get_player(player_id=player_id)
         if player is None:
             return
-        message_obj = Message(player_id=player.id, username=player.name, message=message)
+        send_time = datetime.now()
+        message_obj = Message(player_id=player.id, username=player.name, message=message, timestamp=send_time)
         await self.chat.send_message(message=message_obj)
         data = {
             "type": "chat_incoming",
