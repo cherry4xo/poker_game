@@ -228,7 +228,6 @@ class Player:
                 self.balance = 0
                 self.status = PlayerStatus.ALL_IN
             else:
-                print(bet, delta)
                 delta = bet - self.currentbet
                 self.currentbet = bet
                 self.balance -= delta

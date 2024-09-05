@@ -281,9 +281,14 @@ class Session(Broadcaster):
         player_seat = self.seats.index(user_id)
         seat_index = (player_seat + 1) % self.max_players
         next_player_seat = self.seats[seat_index]
+        next_player = self.get_player(next_player_seat) if next_player_seat is not None else None
         while next_player_seat is None:
+            if next_player is not None:
+                if next_player.status == PlayerStatus.PASS:
+                    continue
             seat_index = (seat_index + 1) % self.max_players
             next_player_seat = self.seats[seat_index]
+            next_player = self.get_player(next_player_seat) if next_player_seat is not None else None
         return seat_index
     
     async def _get_player_by_index(self, index: int) -> Player:
@@ -405,6 +410,30 @@ class Session(Broadcaster):
         self.main_pot = 0
         self.side_pots = []
         await self.save()
+
+    async def check_allowed_actions(self):
+        player = self.get_player(self.seats[self.current_player])
+        allowed_actions = []
+        if player.currentbet == self.current_bet:
+            allowed_actions.append("check")
+
+        # The player can call if there is a higher bet they haven't matched
+        if self.current_bet > player.currentbet and player.balance >= (self.current_bet - player.currentbet):
+            allowed_actions.append("call")
+
+        # The player can raise if they have enough balance and the current bet is greater than zero
+        if self.current_bet > 0 and player.balance > self.current_bet:
+            allowed_actions.append("raise")
+
+        # The player can bet if no bet has been made (i.e., current bet is zero)
+        if self.current_bet == 0 and player.balance > 0:
+            allowed_actions.append("bet")
+
+        # The player can always pass (fold)
+        allowed_actions.append("pass")
+
+        return allowed_actions
+
         
     async def start_game(self) -> dict:
         data = await self.get_data()
@@ -455,7 +484,8 @@ class Session(Broadcaster):
         return {
             "type": "success",
             "message": "started game",
-            "data": self.data
+            "data": self.data,
+            "allowed_actions": await self.check_allowed_actions()
         }
     
     async def bet(self, player_id: UUID4, value: float) -> dict:
@@ -487,7 +517,8 @@ class Session(Broadcaster):
         return {
             "type": "success",
             "message": "user betted",
-            "data": self.data
+            "data": self.data,
+            "allowed_actions": await self.check_allowed_actions()
         }
     
     async def call(self, player_id: UUID4) -> dict:
@@ -519,7 +550,8 @@ class Session(Broadcaster):
         return {
             "type": "success",
             "message": "user called",
-            "data": self.data
+            "data": self.data,
+            "allowed_actions": await self.check_allowed_actions()
         }
     
     async def raise_bet(self, player_id: UUID4, value: float) -> dict:
@@ -534,15 +566,18 @@ class Session(Broadcaster):
         if value >= player.balance:
             value = player.balance
             new_side_pot = SidePot()
+            temp_bet = player.currentbet
             bet_amount = await player._raise(value)
             new_side_pot.add_bet(bet_amount, player)
             self.side_pots.append(new_side_pot)
-            self.total_bet
+            self.total_bet += bet_amount
+            self.current_bet = max(self.current_bet, bet_amount + temp_bet - self.current_bet)
         else:
+            temp_bet = player.currentbet
             total_value = await player._raise(value)
             self.main_pot += total_value
             self.total_bet += total_value
-            self.current_bet += total_value
+            self.current_bet += total_value + temp_bet - self.current_bet
         # delta = await player._raise(value=value)
         # self.total_bet += delta
         # self.current_bet = player.currentbet
@@ -554,7 +589,8 @@ class Session(Broadcaster):
         return {
             "type": "success",
             "message": "user raised",
-            "data": self.data
+            "data": self.data,
+            "allowed_actions": await self.check_allowed_actions()
         }
     
     async def pass_board(self, player_id: UUID4) -> dict:
@@ -567,7 +603,9 @@ class Session(Broadcaster):
             }
         player = self.get_player(player_id=player_id)
         await player._pass()
-        self.seats[user_seat] = None
+        await self.save()
+        next_player_index = await self._get_next_busy_seat(player.id)
+        self.current_player = next_player_index
         await self.save()
 
         count_players = sum([seat is not None for seat in self.seats])
@@ -586,7 +624,8 @@ class Session(Broadcaster):
         return {
             "type": "success",
             "message": "user passed",
-            "data": self.data
+            "data": self.data,
+            "allowed_actions": await self.check_allowed_actions()
         }
     
     async def get_winners(self) -> List[int]:
@@ -723,7 +762,8 @@ class Session(Broadcaster):
         return {
             "type": "success",
             "message": "checked",
-            "data": self.data
+            "data": self.data,
+            "allowed_actions": await self.check_allowed_actions()
         }
     
     async def end_game(self) -> None:
