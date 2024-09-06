@@ -4,6 +4,7 @@ import { IGame } from '@/utils/types';
 import { SessionStage, SessionStatus } from '@/utils/enums';
 
 const initialState: IGame = {
+    "allowed_actions": [],
     "id": "",
     "status": SessionStatus.LOBBY,
     "seats": [null, null, null, null],

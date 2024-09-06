@@ -1,6 +1,7 @@
 import { PlayerStatus, SessionStage, SessionStatus } from '@/utils/enums';
 
 export interface IGame {
+    allowed_actions: string[],
     id: string;
     status: SessionStatus;
     seats: any[];
