@@ -6,7 +6,6 @@ import { ease } from '@/utils/misc';
 import { useEffect } from 'react';
 import { useApi } from '@/hooks';
 import { usePathname } from 'next/navigation';
-import { Progress, Spinner } from '@chakra-ui/react';
 
 export function Launcher() {
     const dispatch = useDispatch();
@@ -39,9 +38,9 @@ export function Launcher() {
             style={{ width: '100vw', height: '100svh', display: 'flex', flexDirection: 'column', padding: '30px', justifyContent: 'end', alignItems: 'end', position: 'fixed', top: 0, left: 0, zIndex: 10000, background: '#181c1f', pointerEvents: 'none' }}
             initial={{ opacity: 1 }}
             animate={{ opacity: device === null ? 1 : 0 }}
-            transition={{ delay: .5, duration: .5, ease }}
+            transition={{ duration: .5, ease }}
         >
-            <Spinner w='60px' h='60px' color='green.700' thickness='6px' speed='0.35s' />
+            {/*<Spinner w='60px' h='60px' color='green.700' thickness='6px' speed='0.35s' />*/}
         </motion.div>
     </>;
 }

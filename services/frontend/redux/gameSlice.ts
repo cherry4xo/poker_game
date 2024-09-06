@@ -36,7 +36,6 @@ export const gameSlice = createSlice({
             // #winnerskostyl
             // remove at all, should be on backend
             if (!!res.winners) {
-                res.seats = state.seats;
                 res.status = 4;
             }
 

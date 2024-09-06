@@ -52,6 +52,7 @@ export function AuthForm({ login }: { login?: boolean }) {
                             rounded='15px'
                             id={field}
                             name={field}
+                            type={field === 'password' ? 'password' : 'text'}
                             placeholder={aliases[(login ? (field === 'username' ? 'email' : field) : field) as IAlias]}
                             validate={(value: string) => {
                                 let error;

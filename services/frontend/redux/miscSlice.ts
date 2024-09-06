@@ -13,7 +13,7 @@ interface MiscState {
 const initialState: MiscState = {
     device: null,
     user: null,
-    loading: {},
+    loading: { validate: true },
     chat: [],
     href: ''
 };
@@ -40,6 +40,9 @@ export const miscSlice = createSlice({
         setLoading: (state, action: PayloadAction<string>) => {
             state.loading[action.payload as keyof typeof state.loading] = true;
         },
+        stopLoading: (state, action: PayloadAction<string>) => {
+            state.loading[action.payload as keyof typeof state.loading] = false;
+        },
         clearUserSession: (state) => {
             if (state.user) state.user.session_id = null;
         },
@@ -55,5 +58,5 @@ export const miscSlice = createSlice({
     }
 });
 
-export const { setDevice, setUser, setLoading, setChatHistory, addChatMsg, setHref } = miscSlice.actions;
+export const { setDevice, setUser, setLoading, stopLoading, setChatHistory, addChatMsg, setHref } = miscSlice.actions;
 export default miscSlice.reducer;

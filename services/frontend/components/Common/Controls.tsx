@@ -1,5 +1,5 @@
 'use client';
-import { Button, HStack, Text } from '@chakra-ui/react';
+import { Button, HStack } from '@chakra-ui/react';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
 import { useWs } from '@/app/contexts/SocketContext';
@@ -12,7 +12,6 @@ export function Controls() {
 
     const toBet = 10;
     const toRaise = 20;
-    const currentbet = players.find((p: IPlayer) => p.id === user?.uuid)?.currentbet ?? 0;
 
     const buttons = [
         [],
@@ -24,20 +23,13 @@ export function Controls() {
             { label: 'Колл', color: 'teal', payload: { type: 'call' } },
             { label: `Рейз (${toRaise})`, color: 'teal', payload: { type: 'raise', value: Math.max(...players.map((p: IPlayer) => p.currentbet)) + toRaise } },
             { label: 'Фолд/пасс', color: 'red', payload: { type: 'pass' } },
-            // { label: 'Чек', color: 'red', payload: { type: 'check' } }
+            { label: 'Чек', color: 'red', payload: { type: 'check' } }
         ]
     ];
 
     return <HStack h='70px' spacing='8px'>
-        {(status === SessionStatus.LOBBY
-                ? (seats.filter(s => s).length >= 2 && owner === user?.uuid)
-                : true) &&
-            buttons[status]
-                .filter(b => {
-                    if (b.payload.type === 'bet') return currentbet <= 0;
-                    else return true;
-                })
-                .map((b: any, i: number) =>
-                    <Button key={i} isDisabled={seats[current_player ?? 0] !== user?.uuid} h='100%' p='12px 24px' fontSize='18px' rounded='10px' variant='outline' colorScheme={b.color} onClick={() => ws.current.send(JSON.stringify(b.payload))}>{b.label}</Button>)}
+        {(status === SessionStatus.LOBBY ? (seats.filter(s => s).length >= 2 && owner === user?.uuid) : true) &&
+            buttons[status].map((b: any, i: number) =>
+                <Button key={i} isDisabled={status === SessionStatus.GAME ? (seats[current_player ?? 0] !== user?.uuid) : false} h='100%' p='12px 24px' fontSize='18px' rounded='10px' variant='outline' colorScheme={b.color} onClick={() => ws.current.send(JSON.stringify(b.payload))}>{b.label}</Button>)}
     </HStack>;
 }

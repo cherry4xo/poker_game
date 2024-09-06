@@ -6,7 +6,7 @@ import { ISignup, IUser } from '@/utils/types';
 import { useWs } from '@/app/contexts/SocketContext';
 import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
-import { addChatMsg, setChatHistory, setLoading, setUser } from '@/redux/miscSlice';
+import { addChatMsg, setChatHistory, setLoading, setUser, stopLoading } from '@/redux/miscSlice';
 import { deleteAuth, getAuth, setAuth } from './cookiesStore';
 import { usePathname } from 'next/navigation';
 import { useWinnersModal } from '@/app/contexts';
@@ -177,22 +177,24 @@ export function useApi() {
         ws.current = socket;
     }, []);
 
+    const validate = useCallback(async () => await exec({
+        method: 'get',
+        url: '/poker_game/game/validate',
+        onSuccess(data: IUser) {
+            dispatch(setUser(data));
+            dispatch(stopLoading('validate'));
+        }
+    }), []);
+
     return {
         async load(func: string) {
             dispatch(setLoading(func));
 
             if (func === 'create') await create();
-            if (func === 'signout') signout();
+            else if (func === 'signout') signout();
         },
 
-        validate: async () => await exec({
-            method: 'get',
-            url: '/poker_game/game/validate',
-            onSuccess(data: IUser) {
-                dispatch(setUser(data));
-            }
-        }),
-
+        validate,
         signin,
         signup,
         signout,
