@@ -765,7 +765,8 @@ class Session(Broadcaster):
                     if player.balance != 0:
                         return {
                             "type": "success",
-                            "message": "not_ready_for_check"
+                            "message": "not_ready_for_check",
+                            "allowed_actions": await self.check_allowed_actions()
                         }
                     
         for seat in self.seats:
