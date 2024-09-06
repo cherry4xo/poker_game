@@ -433,7 +433,13 @@ class Session(Broadcaster):
         allowed_actions.append("pass")
 
         return allowed_actions
-
+    
+    async def get_count_active_players(self):
+        count = 0
+        for player in self.players:
+            if player.status == PlayerStatus.PLAYING:
+                count += 1
+        return count
         
     async def start_game(self) -> dict:
         data = await self.get_data()
@@ -489,6 +495,12 @@ class Session(Broadcaster):
         }
     
     async def bet(self, player_id: UUID4, value: float) -> dict:
+        allowed = await self.check_allowed_actions()
+        if "bet" not in allowed:
+            return {
+                "type": "error",
+                "message": "illegal action"
+            }
         await self.get_data()
         user_seat = await self._get_index_by_player(player_id=player_id)
         if user_seat == -1 or user_seat != self.current_player:
@@ -522,6 +534,12 @@ class Session(Broadcaster):
         }
     
     async def call(self, player_id: UUID4) -> dict:
+        allowed = await self.check_allowed_actions()
+        if "call" not in allowed:
+            return {
+                "type": "error",
+                "message": "illegal action"
+            }
         await self.get_data()
         user_seat = await self._get_index_by_player(player_id=player_id)
         if user_seat == -1 or user_seat != self.current_player:
@@ -555,6 +573,12 @@ class Session(Broadcaster):
         }
     
     async def raise_bet(self, player_id: UUID4, value: float) -> dict:
+        allowed = await self.check_allowed_actions()
+        if "raise" not in allowed:
+            return {
+                "type": "error",
+                "message": "illegal action"
+            }
         await self.get_data()
         user_seat = await self._get_index_by_player(player_id=player_id)
         if user_seat == -1 or user_seat != self.current_player:
@@ -594,6 +618,12 @@ class Session(Broadcaster):
         }
     
     async def pass_board(self, player_id: UUID4) -> dict:
+        allowed = await self.check_allowed_actions()
+        if "pass" not in allowed:
+            return {
+                "type": "error",
+                "message": "illegal action"
+            }
         await self.get_data()
         user_seat = await self._get_index_by_player(player_id=player_id)
         if user_seat == -1 or user_seat != self.current_player:
@@ -608,7 +638,8 @@ class Session(Broadcaster):
         self.current_player = next_player_index
         await self.save()
 
-        count_players = sum([seat is not None for seat in self.seats])
+
+        count_players = await self.get_count_active_players()
         if count_players < 2:
             winners = await self.get_winners()
             await self.distribute_winnings()

@@ -35,16 +35,16 @@ services:
       - 5432
     volumes:
       - "users-postgres:/data/db"
-  game: 
-    build: ./services/game
-    restart: unless-stopped
-    ports:
-      - "8081:8083"
-    links:
-      - redis
-      - auth
-      - users-postgres
-    command: python3 -u -m uvicorn main:app --host 0.0.0.0 --port 8083
+  # game: 
+  #   build: ./services/game
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8081:8083"
+  #   links:
+  #     - redis
+  #     - auth
+  #     - users-postgres
+  #   command: python3 -u -m uvicorn main:app --host 0.0.0.0 --port 8083
   redis:
     image: redis:alpine
     restart: unless-stopped
@@ -72,11 +72,11 @@ services:
   #   environment:
   #     - CLIENT_SECRET=UFEubVvILIcqQwDusHfbMIBGEAVdIgou
   #     - CLIENT_ID=HFLHNhgBmeDRDQFvRRjmxWSTNzNLWCQO
-  frontend:
-    build: ./services/frontend
-    restart: unless-stopped
-    ports:
-      - "3010:3000"
+  # frontend:
+  #   build: ./services/frontend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3010:3000"
 
 volumes:
   redis:

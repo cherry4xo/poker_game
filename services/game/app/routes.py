@@ -93,28 +93,40 @@ async def webscoket_endpoint(
                 await session.send_all_data(session.data)
             elif data["type"] == "start":
                 ans = await session.start_game()
-                data = {}
-                data.update(session.data)
-                data.update({"allowed_actions": ans["allowed_actions"]})
-                await session.send_all_data(data)
+                if ans["type"] == "success":
+                    data = {}
+                    data.update(session.data)
+                    data.update({"allowed_actions": ans["allowed_actions"]})
+                    await session.send_all_data(data)
+                else:
+                    await session.send_all_data(ans)
             elif data["type"] == "bet":
                 ans = await session.bet(player_id=user_id, value=data["value"])
-                data = {}
-                data.update(session.data)
-                data.update({"allowed_actions": ans["allowed_actions"]})
-                await session.send_all_data(data)
+                if ans["type"] == "success":
+                    data = {}
+                    data.update(session.data)
+                    data.update({"allowed_actions": ans["allowed_actions"]})
+                    await session.send_all_data(data)
+                else:
+                    await session.send_all_data(ans)
             elif data["type"] == "call":
                 ans = await session.call(player_id=user_id)
-                data = {}
-                data.update(session.data)
-                data.update({"allowed_actions": ans["allowed_actions"]})
-                await session.send_all_data(data)
+                if ans["type"] == "success":
+                    data = {}
+                    data.update(session.data)
+                    data.update({"allowed_actions": ans["allowed_actions"]})
+                    await session.send_all_data(data)
+                else:
+                    await session.send_all_data(ans)
             elif data["type"] == "raise":
                 ans = await session.raise_bet(player_id=user_id, value=data["value"])
-                data = {}
-                data.update(session.data)
-                data.update({"allowed_actions": ans["allowed_actions"]})
-                await session.send_all_data(data)
+                if ans["type"] == "success":
+                    data = {}
+                    data.update(session.data)
+                    data.update({"allowed_actions": ans["allowed_actions"]})
+                    await session.send_all_data(data)
+                else:
+                    await session.send_all_data(ans)
             elif data["type"] == "pass":
                 ans = await session.pass_board(player_id=user_id)
                 if ans["message"] == "ends":
@@ -124,9 +136,13 @@ async def webscoket_endpoint(
                     await session.send_all_data(data)
                 else:
                     data = {}
-                    data.update(session.data)
-                    data.update({"allowed_actions": ans["allowed_actions"]})
-                    await session.send_all_data(data)
+                    if ans["type"] == "success":
+                        data = {}
+                        data.update(session.data)
+                        data.update({"allowed_actions": ans["allowed_actions"]})
+                        await session.send_all_data(data)
+                    else:
+                        await session.send_all_data(ans)
             elif data["type"] == "check":
                 ans = await session.check(player_id=user_id)
                 if ans["message"] == "ends":
@@ -136,9 +152,13 @@ async def webscoket_endpoint(
                     await session.send_all_data(data)
                 else:
                     data = {}
-                    data.update(session.data)
-                    data.update({"allowed_actions": ans["allowed_actions"]})
-                    await session.send_all_data(data)
+                    if ans["type"] == "success":
+                        data = {}
+                        data.update(session.data)
+                        data.update({"allowed_actions": ans["allowed_actions"]})
+                        await session.send_all_data(data)
+                    else:
+                        await session.send_all_data(ans)
             elif data["type"] == "root":
                 ans = await session.get_winners()
                 await session.send_all_data({"winners": ans})
