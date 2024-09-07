@@ -27,6 +27,7 @@ class SessionStatus(Enum):
     LOBBY = 1
     GAME = 2
     PAUSED = 3
+    END = 4
 
 
 # number of checks in game
@@ -414,6 +415,8 @@ class Session(Broadcaster):
     async def check_allowed_actions(self):
         player = self.get_player(self.seats[self.current_player])
         allowed_actions = []
+        if self.status != SessionStatus.GAME:
+            return allowed_actions
         if player.currentbet == self.current_bet:
             allowed_actions.append("check")
 
@@ -800,7 +803,7 @@ class Session(Broadcaster):
     
     async def end_game(self) -> None:
         self.stage = SessionStage.PREFLOP
-        self.status = SessionStatus.LOBBY
+        self.status = SessionStatus.END
 
         self.board = Hand()
         self.current_player = 0
