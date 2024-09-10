@@ -168,8 +168,6 @@ export function useApi() {
                 dispatch(addChatMsg(data.payload));
                 scrollChat();
             } else {
-                // #winnerskostyl
-                // if (data.status === SessionStatus.END) onOpen();
                 if (!!data.winners) onOpen();
 
                 dispatch(setGameState(data));

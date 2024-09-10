@@ -34,12 +34,6 @@ export const gameSlice = createSlice({
         setGameState: (state, action: PayloadAction<IGame>) => {
             const res = structuredClone(action.payload);
 
-            // #winnerskostyl
-            // remove at all, should be on backend
-            if (!!res.winners) {
-                res.status = 4;
-            }
-
             res.seats = res.seats.map((s: string) => (s === 'None' ? null : s));
             Object.assign(state, res);
         }

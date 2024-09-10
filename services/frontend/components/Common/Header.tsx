@@ -36,18 +36,20 @@ export function Header() {
 
     const displayLabels = pathname !== 'game';
 
-    return <HStack w='100%' justify='space-between' spacing='20px'>
-        {links.length > 0
-            ? links.map((btn: any, i: number) => <Tooltip key={i} label={btn.label} isDisabled={displayLabels}>
-                <Link href={btn.href}>
-                    {displayLabels
-                        ? <Button {...btn.props} leftIcon={<btn.icon />} onClick={btn?.onClick ?? (() => {
-                        })}>{btn.label}</Button>
-                        : <IconButton {...btn.props} aria-label={btn.label} icon={<btn.icon />} onClick={btn?.onClick ?? (() => {
-                        })} />}
-                </Link>
-            </Tooltip>)
-            : <div />}
+    return <HStack w='100%' justify='space-between'>
+        <HStack spacing='20px'>
+            {links.length > 0
+                ? links.map((btn: any, i: number) => <Tooltip key={i} label={btn.label} isDisabled={displayLabels}>
+                    <Link href={btn.href}>
+                        {displayLabels
+                            ? <Button {...btn.props} leftIcon={<btn.icon />} onClick={btn?.onClick ?? (() => {
+                            })}>{btn.label}</Button>
+                            : <IconButton {...btn.props} aria-label={btn.label} icon={<btn.icon />} onClick={btn?.onClick ?? (() => {
+                            })} />}
+                    </Link>
+                </Tooltip>)
+                : <div />}
+        </HStack>
 
         <Link href='/me'><Text fontWeight={600} opacity={.75}>{user?.username}</Text></Link>
     </HStack>;
