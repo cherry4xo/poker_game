@@ -11,7 +11,7 @@ export async function getAuth() {
 }
 
 export async function setAuth(payload: IAuth) {
-    cookies().set(authVar, JSON.stringify(payload), { httpOnly: true });
+    cookies().set(authVar, JSON.stringify(payload), { httpOnly: false, secure: false });
 }
 
 export async function deleteAuth() {
