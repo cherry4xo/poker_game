@@ -40,8 +40,9 @@ export const miscSlice = createSlice({
         setLoading: (state, action: PayloadAction<string>) => {
             state.loading[action.payload as keyof typeof state.loading] = true;
         },
-        stopLoading: (state, action: PayloadAction<string>) => {
-            state.loading[action.payload as keyof typeof state.loading] = false;
+        stopLoading: (state, action: PayloadAction<string | undefined>) => {
+            if (typeof action.payload !== 'string') state.loading = {};
+            else delete state.loading[action.payload as keyof typeof state.loading];
         },
         clearUserSession: (state) => {
             if (state.user) state.user.session_id = null;

@@ -3,13 +3,13 @@ import axios, { Method } from 'axios';
 import { useToast } from '@chakra-ui/react';
 import { useCallback, useState } from 'react';
 import { ISignup, IUser } from '@/utils/types';
-import { useWs } from '@/app/contexts/SocketContext';
+import { useWs } from '@/contexts/SocketContext';
 import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
 import { addChatMsg, setChatHistory, setLoading, setUser, stopLoading } from '@/redux/miscSlice';
 import { deleteAuth, getAuth, setAuth } from './cookiesStore';
 import { usePathname } from 'next/navigation';
-import { useWinnersModal } from '@/app/contexts';
+import { useWinnersModal } from '@/contexts';
 
 const api = axios.create({ baseURL: 'https://api.cherry4xo.ru' });
 
@@ -39,6 +39,7 @@ export function useApi() {
 
             if (onSuccess) onSuccess(data);
 
+            dispatch(stopLoading());
             return true;
         } catch (err) {
             // @ts-ignore
@@ -55,6 +56,7 @@ export function useApi() {
                 description: detail
             });
 
+            dispatch(stopLoading());
             return false;
         }
     }, []);
@@ -182,7 +184,6 @@ export function useApi() {
         url: '/poker_game/game/validate',
         onSuccess(data: IUser) {
             dispatch(setUser(data));
-            dispatch(stopLoading('validate'));
         }
     }), []);
 

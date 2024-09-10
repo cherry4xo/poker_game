@@ -1,7 +1,7 @@
 'use client';
 import { HStack, IconButton, Input, Text, VStack } from '@chakra-ui/react';
 import { useCallback, useRef, useState } from 'react';
-import { useWs } from '@/app/contexts/SocketContext';
+import { useWs } from '@/contexts/SocketContext';
 import { useSelector } from '@/redux/hooks';
 import { IMessage } from '@/utils/types';
 import { IoSend } from 'react-icons/io5';

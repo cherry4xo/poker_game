@@ -2,7 +2,7 @@
 import { Button, HStack } from '@chakra-ui/react';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
-import { useWs } from '@/app/contexts/SocketContext';
+import { useWs } from '@/contexts/SocketContext';
 import { SessionStatus } from '@/utils/enums';
 
 export function Controls() {

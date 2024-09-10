@@ -22,7 +22,7 @@ export function WinnersModalProvider({ children }: { children: React.ReactNode }
 
                 <ModalFooter>
                     <HStack w='100%' justify='center'>
-                        <Header displayLabels />
+                        <Header />
                     </HStack>
                 </ModalFooter>
             </ModalContent>
