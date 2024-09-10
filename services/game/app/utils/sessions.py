@@ -27,7 +27,6 @@ class SessionStatus(Enum):
     LOBBY = 1
     GAME = 2
     PAUSED = 3
-    END = 4
 
 
 # number of checks in game
@@ -803,7 +802,7 @@ class Session(Broadcaster):
     
     async def end_game(self) -> None:
         self.stage = SessionStage.PREFLOP
-        self.status = SessionStatus.END
+        self.status = SessionStatus.LOBBY
 
         self.board = Hand()
         self.current_player = 0
