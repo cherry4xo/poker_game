@@ -1,11 +1,13 @@
 'use client';
-import { Button, HStack, IconButton, Text, Tooltip, useToast } from '@chakra-ui/react';
+import { Button, HStack, Icon, IconButton, Text, Tooltip, useToast } from '@chakra-ui/react';
 import Link from 'next/link';
 import { useWs } from '@/contexts/SocketContext';
 import { useDispatch, useSelector } from '@/redux/hooks';
 import { TbDoorExit, TbHome } from 'react-icons/tb';
 import { useCallback } from 'react';
 import { usePathname } from 'next/navigation';
+import { FaUserCircle } from 'react-icons/fa';
+import { Sum } from '@/components/Common/Sum';
 
 export function Header() {
     const ws = useWs();
@@ -34,10 +36,10 @@ export function Header() {
         '/me': [home]
     }[pathname] ?? [];
 
-    const displayLabels = pathname !== 'game';
+    const displayLabels = pathname !== '/game';
 
     return <HStack w='100%' justify='space-between'>
-        <HStack spacing='20px'>
+        <HStack spacing='12px'>
             {links.length > 0
                 ? links.map((btn: any, i: number) => <Tooltip key={i} label={btn.label} isDisabled={displayLabels}>
                     <Link href={btn.href}>
@@ -51,6 +53,12 @@ export function Header() {
                 : <div />}
         </HStack>
 
-        <Link href='/me'><Text fontWeight={600} opacity={.75}>{user?.username}</Text></Link>
+        <Link href='/me'>
+            {user && <HStack spacing='10px' mr='10px' _hover={{ opacity: .75 }} transition='0.2s'>
+                <Icon as={FaUserCircle} w='20px' h='20px' />
+                <Text fontWeight={600} opacity={.75}>{user.username}</Text>
+                {/*<Sum>{user.balance}</Sum>*/}
+            </HStack>}
+        </Link>
     </HStack>;
 }

@@ -18,12 +18,14 @@ export default function Home() {
         {!loading?.validate
             ? (user
                 ? <VStack w='100%' py='10svh' spacing='50px'>
-                    <VStack>
-                        <Text fontSize='24px' fontWeight={600} color='teal'>Poker Game</Text>
-                        {!!user.session_id && <Link href='/game'><Button colorScheme='yellow' leftIcon={<TbHomeDot />}>Вернуться в игру</Button></Link>}
-                    </VStack>
+                    <Sum color='teal'>Poker Game</Sum>
 
-                    <SimpleGrid columns={device !== 'phone' ? 2 : 1} spacing='14px'>
+                    {!!user.session_id && <VStack>
+                        <Text fontSize='18px' fontWeight={600}>Вы уже в игре!</Text>
+                        <Link href='/game'><Button colorScheme='yellow' leftIcon={<TbHomeDot />}>Вернуться в игру</Button></Link>
+                    </VStack>}
+
+                    <SimpleGrid columns={device !== 'phone' ? 2 : 1} spacing='14px' opacity={!!user.session_id ? .5 : 1} pointerEvents={!!user.session_id ? 'none' : 'auto'}>
                         {games.map((_: any, i: number) => <VStack key={i} p='30px' spacing='18px' rounded='10px' bg='whiteAlpha.100' justify='center' align='center'>
                             <HStack pos='relative' w={device !== 'phone' ? '400px' : '90vw'} h='200px' border='12px solid black' bg='#063605' spacing='20px' rounded='full' justify='center' align='center'>
                                 <Text><b>0/4</b></Text>

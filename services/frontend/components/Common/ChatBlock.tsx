@@ -3,7 +3,7 @@ import { HStack, IconButton, Input, Text, VStack } from '@chakra-ui/react';
 import { useCallback, useRef, useState } from 'react';
 import { useWs } from '@/contexts/SocketContext';
 import { useSelector } from '@/redux/hooks';
-import { IMessage } from '@/utils/types';
+import { IMessage, IPlayer } from '@/utils/types';
 import { IoSend } from 'react-icons/io5';
 import { animate } from 'framer-motion';
 import { colors, ease } from '@/utils/misc';
@@ -12,24 +12,29 @@ import { FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 export function ChatBlock() {
     const ws = useWs();
     const [text, setText] = useState('');
-    const { chat, device } = useSelector(state => state.misc);
-    const { seats } = useSelector(state => state.game);
+    const { chat, device, typing } = useSelector(state => state.misc);
+    const { seats, players } = useSelector(state => state.game);
     const [opened, setOpened] = useState(true);
     const time = useRef(null as unknown as NodeJS.Timeout);
 
-    const typing = useCallback(() => {
+    const endTyping = useCallback(() => {
+        time.current = null as unknown as NodeJS.Timeout;
+        ws.current.send(JSON.stringify({ type: 'typing_end' }));
+    }, [time]);
+
+    const startTyping = useCallback(() => {
         if (!time.current) ws.current.send(JSON.stringify({ type: 'typing_start' }));
-        time.current = setTimeout(() => ws.current.send(JSON.stringify({ type: 'typing_end' })), 1500);
+        time.current = setTimeout(endTyping, 1500);
     }, [time]);
 
     const send = useCallback(() => {
         if (text.length <= 0) return;
-        ws.current.send(JSON.stringify({ type: 'typing_end' }));
+        endTyping();
         ws.current.send(JSON.stringify({ type: 'new_message', message: text }));
         setText('');
     }, [text, ws]);
 
-    return <VStack w='100%' zIndex={10} p='16px 20px' spacing='14px' id='pablo' pos='relative' bg='gray.800'>
+    return <VStack w='100%' p='16px 20px' spacing='14px' id='pablo' pos='relative' bg='gray.800'>
         <VStack w={device !== 'phone' ? '400px' : '300px'} maxH={device !== 'phone' ? '120px' : '11svh'} pb='10px' fontSize='14px' overflowY='auto' id='chatList'>
             {chat.length > 0
                 ? chat.map((msg: IMessage, i: number) => <HStack key={i} w='100%' justify='start' spacing='10px'>
@@ -39,6 +44,20 @@ export function ChatBlock() {
                 </HStack>)
                 : <Text w='100%' textAlign='left' opacity={.5}>пустовато тут... напишите первым!</Text>}
         </VStack>
+
+        <HStack>
+            {typing
+                .filter((t: string) => players.findIndex((p: IPlayer) => p.id === t) > -1)
+                .map((t: string) => {
+                    const player = players.find((p: IPlayer) => p.id === t) as IPlayer;
+                    const color = colors[seats.indexOf(t)];
+
+                    return <Text as='span' color={color}>{player.name}</Text>;
+                })
+                .join(', ')}
+
+            {typing.length > 0 && <Text>typing...</Text>}
+        </HStack>
 
         <HStack w='100%' opacity={.75} spacing={0}>
             <Input
@@ -51,7 +70,7 @@ export function ChatBlock() {
                 onChange={(e: any) => {
                     if (e.target.value.length <= 100) {
                         setText(e.target.value);
-                        typing();
+                        startTyping();
                     }
                 }}
             />

@@ -8,6 +8,7 @@ interface MiscState {
     loading: any;
     chat: IMessage[];
     href: string;
+    typing: string[];
 }
 
 const initialState: MiscState = {
@@ -15,7 +16,8 @@ const initialState: MiscState = {
     user: null,
     loading: { validate: true },
     chat: [],
-    href: ''
+    href: '',
+    typing: []
 };
 
 function decryptMsg(msg: string): IMessage {
@@ -55,9 +57,16 @@ export const miscSlice = createSlice({
         },
         setHref: (state, action: PayloadAction<string>) => {
             state.href = action.payload;
+        },
+        setTyping: (state, action: PayloadAction<{ type: 'typing_start' | 'typing_end', id: string }>) => {
+            if (action.payload.type === 'typing_start') {
+                state.typing.push(action.payload.id);
+            } else if (action.payload.type === 'typing_end') {
+                state.typing = state.typing.filter((t: string) => t !== action.payload.id);
+            }
         }
     }
 });
 
-export const { setDevice, setUser, setLoading, stopLoading, setChatHistory, addChatMsg, setHref } = miscSlice.actions;
+export const { setDevice, setUser, setLoading, stopLoading, setChatHistory, addChatMsg, setHref, setTyping } = miscSlice.actions;
 export default miscSlice.reducer;

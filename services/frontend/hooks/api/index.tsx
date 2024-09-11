@@ -6,7 +6,7 @@ import { ISignup, IUser } from '@/utils/types';
 import { useWs } from '@/contexts/SocketContext';
 import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
-import { addChatMsg, setChatHistory, setLoading, setUser, stopLoading } from '@/redux/miscSlice';
+import { addChatMsg, setChatHistory, setLoading, setTyping, setUser, stopLoading } from '@/redux/miscSlice';
 import { deleteAuth, getAuth, setAuth } from './cookiesStore';
 import { usePathname } from 'next/navigation';
 import { useWinnersModal } from '@/contexts';
@@ -151,7 +151,7 @@ export function useApi() {
 
         socket.onmessage = e => {
             const data = JSON.parse(JSON.parse(e.data));
-            console.log(new Date().toLocaleTimeString('ru-RU'), data);
+            // console.log(new Date().toLocaleTimeString('ru-RU'), data);
 
             function scrollChat() {
                 setTimeout(() => {
@@ -167,9 +167,10 @@ export function useApi() {
                 // new Audio('/tone3.mp3').play();
                 dispatch(addChatMsg(data.payload));
                 scrollChat();
+            } else if (data?.type === 'typing_start' || data?.type === 'typing_end') {
+                dispatch(setTyping(data));
             } else {
                 if (!!data.winners) onOpen();
-
                 dispatch(setGameState(data));
             }
         };
