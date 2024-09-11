@@ -77,6 +77,10 @@ async def webscoket_endpoint(
     player = session.get_player(player_id=user_id)
     if player is not None:
         player.websocket = websocket
+        allowed_actions = await session.check_allowed_actions()
+        data = {}
+        data.update(session.data)
+        data.update({"allowed_actions": allowed_actions})
         await session.send_all_data(session.data)
         chat_history = await session.get_all_messages()
         await session.send_personal_message(player_id=player.id, data=chat_history)
