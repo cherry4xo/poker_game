@@ -7,7 +7,7 @@ export function Card({ data, i }: { data: { rank: string, suit: string } | undef
     let TheCard = deck.B1;
 
     if (!!data) {
-        const rank = !isNaN(parseInt(data.rank)) ? data.rank : data.rank[0].toUpperCase();
+        const rank = !isNaN(parseInt(data.rank)) ? data.rank : data.rank[0];
         const suit = data.suit[0].toUpperCase();
         TheCard = deck[`${suit}${rank}`] ?? deck.B2;
     }
