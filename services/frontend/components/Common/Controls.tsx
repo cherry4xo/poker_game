@@ -8,6 +8,8 @@ import { useState } from 'react';
 
 function MySlider({ data }: any) {
     const ws = useWs();
+    const { status, seats, current_player } = useSelector(state => state.game);
+    const { user } = useSelector(state => state.misc);
     const [value, setValue] = useState(Math.round((data.slider[0] + data.slider[1]) / 2));
 
     return <VStack>
@@ -23,6 +25,7 @@ function MySlider({ data }: any) {
         <Button
             variant='outline'
             colorScheme={data.color}
+            isDisabled={status === SessionStatus.GAME ? (seats[current_player ?? 0] !== user?.uuid) : false}
             onClick={() => ws.current.send(JSON.stringify({ ...data.payload, value }))}
         >
             {data.label}
