@@ -81,7 +81,7 @@ async def webscoket_endpoint(
         data = {}
         data.update(session.data)
         data.update({"allowed_actions": allowed_actions})
-        await session.send_all_data(session.data)
+        await session.send_all_data(data)
         chat_history = await session.get_all_messages()
         await session.send_personal_message(player_id=player.id, data=chat_history)
     else:
