@@ -412,10 +412,10 @@ class Session(Broadcaster):
         await self.save()
 
     async def check_allowed_actions(self):
-        player = self.get_player(self.seats[self.current_player])
         allowed_actions = []
         if self.status != SessionStatus.GAME:
             return allowed_actions
+        player = self.get_player(self.seats[self.current_player])
         if player.currentbet == self.current_bet:
             allowed_actions.append("check")
 
