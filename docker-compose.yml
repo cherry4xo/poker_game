@@ -72,11 +72,11 @@ services:
   #   environment:
   #     - CLIENT_SECRET=UFEubVvILIcqQwDusHfbMIBGEAVdIgou
   #     - CLIENT_ID=HFLHNhgBmeDRDQFvRRjmxWSTNzNLWCQO
-  frontend:
-    build: ./services/frontend
-    restart: unless-stopped
-    ports:
-      - "3010:3000"
+  # frontend:
+  #   build: ./services/frontend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3010:3000"
 
 volumes:
   redis:
