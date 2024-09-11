@@ -3,7 +3,7 @@ import { colors, positions } from '@/utils/misc';
 import { Card, ChatBlock, Controls, Sum } from '@/components/Common';
 import { useSelector } from '@/redux/hooks';
 import { IPlayer } from '@/utils/types';
-import { PlayerStatus, SessionStatus } from '@/utils/enums';
+import { PlayerStatus, SessionStage, SessionStatus } from '@/utils/enums';
 import { FaUser } from 'react-icons/fa';
 import { Fragment } from 'react';
 import { useWs } from '@/contexts';
@@ -109,7 +109,8 @@ export default function Game() {
 
         <VStack w='100%' spacing='12px'>
             <HStack spacing='10px' h='100px'>
-                {game.board.cards.map((card: any, i: number) => <Card key={i} i={i} data={card} />)}
+                {/* #kostyl */}
+                {game.board.cards.map((card: any, i: number) => <Card key={i} i={i} data={game.stage === SessionStage.PREFLOP ? undefined : card} />)}
             </HStack>
 
             {game.status === SessionStatus.LOBBY

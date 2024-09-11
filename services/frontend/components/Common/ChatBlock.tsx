@@ -45,11 +45,9 @@ export function ChatBlock() {
             {typing
                 .filter((t: string) => players.findIndex((p: IPlayer) => p.id === t) > -1)
                 .slice(0, 3)
-                .map((t: string) => {
+                .map((t: string, i: number) => {
                     const player = players.find((p: IPlayer) => p.id === t) as IPlayer;
-                    const color = colors[seats.indexOf(t)];
-
-                    return <Text as='span' color={color}>{player.name}</Text>;
+                    return <Text key={i} as='span' color={colors[seats.indexOf(t)]}>{player.name}</Text>;
                 })}
 
             {typing.length > 0 && <Text>typing...</Text>}
