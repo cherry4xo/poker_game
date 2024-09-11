@@ -171,8 +171,16 @@ async def webscoket_endpoint(
                 ans = await session.send_chat_message(player_id=user_id, message=data["message"])
                 await session.send_all_data(ans)
             elif data["type"] == "typing_start":
+                data = {
+                    "type": "typing_start",
+                    "id": player.id
+                }
                 await session.send_all_data(data)
             elif data["type"] == "typing_end":
+                data = {
+                    "type": "typing_end",
+                    "id": player.id
+                }
                 await session.send_all_data(data)
     except WebSocketDisconnect:
         player.websocket = None
