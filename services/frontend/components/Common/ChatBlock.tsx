@@ -18,13 +18,9 @@ export function ChatBlock() {
     const time = useRef(null as unknown as NodeJS.Timeout);
 
     const endTyping = useCallback(() => {
+        clearTimeout(time.current);
         time.current = null as unknown as NodeJS.Timeout;
         ws.current.send(JSON.stringify({ type: 'typing_end' }));
-    }, [time]);
-
-    const startTyping = useCallback(() => {
-        if (!time.current) ws.current.send(JSON.stringify({ type: 'typing_start' }));
-        time.current = setTimeout(endTyping, 1500);
     }, [time]);
 
     const send = useCallback(() => {
@@ -35,7 +31,7 @@ export function ChatBlock() {
     }, [text, ws]);
 
     return <VStack w='100%' p='16px 20px' spacing='14px' id='pablo' pos='relative' bg='gray.800'>
-        <VStack w={device !== 'phone' ? '400px' : '300px'} maxH={device !== 'phone' ? '120px' : '11svh'} pb='10px' fontSize='14px' overflowY='auto' id='chatList'>
+        <VStack w={device !== 'phone' ? '400px' : '300px'} maxH={device !== 'phone' ? '120px' : '11svh'} fontSize='14px' overflowY='auto' id='chatList'>
             {chat.length > 0
                 ? chat.map((msg: IMessage, i: number) => <HStack key={i} w='100%' justify='start' spacing='10px'>
                     <Text opacity={.3}>{msg.datetime}</Text>
@@ -45,16 +41,16 @@ export function ChatBlock() {
                 : <Text w='100%' textAlign='left' opacity={.5}>пустовато тут... напишите первым!</Text>}
         </VStack>
 
-        <HStack>
+        <HStack w='100%' h='20px' justify='start' fontSize='13px' opacity={.75}>
             {typing
                 .filter((t: string) => players.findIndex((p: IPlayer) => p.id === t) > -1)
+                .slice(0, 3)
                 .map((t: string) => {
                     const player = players.find((p: IPlayer) => p.id === t) as IPlayer;
                     const color = colors[seats.indexOf(t)];
 
                     return <Text as='span' color={color}>{player.name}</Text>;
-                })
-                .join(', ')}
+                })}
 
             {typing.length > 0 && <Text>typing...</Text>}
         </HStack>
@@ -70,7 +66,10 @@ export function ChatBlock() {
                 onChange={(e: any) => {
                     if (e.target.value.length <= 100) {
                         setText(e.target.value);
-                        startTyping();
+
+                        if (!time.current) ws.current.send(JSON.stringify({ type: 'typing_start' }));
+                        clearTimeout(time.current);
+                        time.current = setTimeout(endTyping, 2000);
                     }
                 }}
             />
