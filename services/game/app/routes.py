@@ -175,13 +175,13 @@ async def webscoket_endpoint(
                     "type": "typing_start",
                     "id": player.id
                 }
-                await session.send_all_data(data)
+                await session.send_all_data_except_self(data, player.id)
             elif data["type"] == "typing_end":
                 data = {
                     "type": "typing_end",
                     "id": player.id
                 }
-                await session.send_all_data(data)
+                await session.send_all_data_except_self(data, player.id)
     except WebSocketDisconnect:
         player.websocket = None
         await session.send_all_data(session.data)

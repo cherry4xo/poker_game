@@ -42,6 +42,12 @@ class Broadcaster:
             if player.websocket is not None:
                 await player.websocket.send_json(data=data_json)
 
+    async def send_all_data_except_self(self, data: dict, player_id: UUID4) -> None:
+        data_json = json.dumps(data, default=str)
+        for player in self.players:
+            if player.id != player_id and player.websocket is not None:
+                await player.websocket.send_json(data=data_json)
+
     async def send_personal_message(self, player_id: UUID4, data: dict):
         player = self.get_player(player_id=player_id)
         data_json = json.dumps(data, default=str)
