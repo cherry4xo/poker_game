@@ -10,8 +10,8 @@ function MySlider({ data }: any) {
     const ws = useWs();
     const [value, setValue] = useState(Math.round((data.slider[0] + data.slider[1]) / 2));
 
-    return <HStack>
-        <Slider aria-label='slider' min={data.slider[0]} max={data.slider[1]} step={1} value={value} onChange={val => setValue(val)}>
+    return <VStack>
+        <Slider aria-label='slider' min={data.slider[0]} max={data.slider[1]} step={200} value={value} onChange={val => setValue(val)}>
             <SliderTrack>
                 <SliderFilledTrack />
             </SliderTrack>
@@ -20,8 +20,14 @@ function MySlider({ data }: any) {
 
         <Text>{value}</Text>
 
-        <Button onClick={() => ws.current.send(JSON.stringify({ ...data.payload, value }))}>send</Button>
-    </HStack>;
+        <Button
+            variant='outline'
+            colorScheme={data.color}
+            onClick={() => ws.current.send(JSON.stringify({ ...data.payload, value }))}
+        >
+            {data.label}
+        </Button>
+    </VStack>;
 }
 
 export function Controls() {
@@ -50,15 +56,15 @@ export function Controls() {
             buttons[status]
                 .filter(b => status === SessionStatus.GAME ? allowed_actions.includes(b.payload.type) : true)
                 .map((b, i: number) => <VStack key={i}>
-                    {!!b.slider && <MySlider data={b} />}
-
-                    <Button
-                        h='100%' p='12px 24px' fontSize='18px' rounded='10px' variant='outline' colorScheme={b.color}
-                        isDisabled={status === SessionStatus.GAME ? (seats[current_player ?? 0] !== user?.uuid) : (!!b.slider)}
-                        onClick={() => ws.current.send(JSON.stringify(b.payload))}
-                    >
-                        {b.label}
-                    </Button>
+                    {!!b.slider
+                        ? <MySlider data={b} />
+                        : <Button
+                            h='100%' p='12px 24px' fontSize='18px' rounded='10px' variant='outline' colorScheme={b.color}
+                            isDisabled={status === SessionStatus.GAME ? (seats[current_player ?? 0] !== user?.uuid) : false}
+                            onClick={() => ws.current.send(JSON.stringify(b.payload))}
+                        >
+                            {b.label}
+                        </Button>}
                 </VStack>)}
     </HStack>;
 }

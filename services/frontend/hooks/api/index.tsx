@@ -151,7 +151,7 @@ export function useApi() {
 
         socket.onmessage = e => {
             const data = JSON.parse(JSON.parse(e.data));
-            // console.log(new Date().toLocaleTimeString('ru-RU'), data);
+            // console.log(new Date().toLocaleTimeString('ru-RU'), JSON.stringify(data, null, 2));
 
             function scrollChat() {
                 setTimeout(() => {
