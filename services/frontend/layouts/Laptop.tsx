@@ -10,7 +10,7 @@ export default function Home() {
     const { load } = useApi();
     const { user, loading, device } = useSelector(state => state.misc);
 
-    const games = Array.from({ length: 6 });
+    const games = Array.from({ length: 1 });
 
     const [loadingGame, setLoadingGame] = useState(-1);
 
