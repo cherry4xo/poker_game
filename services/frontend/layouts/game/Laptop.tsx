@@ -99,9 +99,17 @@ export default function Game() {
                             {player.status === PlayerStatus.PASS && <Flex {...PlayerLabelStyles} bg='red' color='white'>passed</Flex>}
                         </HStack>}
 
-                        {player.id === user?.uuid && <HStack w='90px' h='60px' spacing='4px' pos='absolute' top='-70px'>
-                            {player.hand.cards.map((card: any, i: number) => <Card key={i} i={i} data={card} />)}
-                        </HStack>}
+                        <HStack w='90px' h='60px' spacing='4px' pos='absolute' top='-70px'>
+                            {player.hand.cards
+                                .map((card: any) => {
+                                    if (game.stage === SessionStage.SHOWDOWN) {
+                                        return card;
+                                    } else {
+                                        return undefined;
+                                    }
+                                })
+                                .map((card: any, i: number) => <Card key={i} i={i} data={card} />)}
+                        </HStack>
                     </> : <Text>занять</Text>}
                 </HStack>
             </Fragment>;
