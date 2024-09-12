@@ -669,6 +669,8 @@ class Session(Broadcaster):
             if player_id is None:
                 continue
             player = self.get_player(player_id=player_id)
+            if player.status == PlayerStatus.PASS:
+                continue
             for card in self.board.cards:
                 player.hand.add_card(card=card)
             player_hand = player.hand
