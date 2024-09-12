@@ -245,8 +245,7 @@ class Session(Broadcaster):
         self.total_bet = data["total_bet"]
         self.owner = UUID(data["owner"]) if data["owner"] != "None" else None
         self.main_pot = data["main_pot"]
-        player_ids = [UUID(player_data["id"]) for player_data in data["players"]]
-        self.side_pots: List[SidePot] = [SidePot.from_dict(data=pot, players=player_ids) for pot in data["side_pots"]]
+        # player_ids = [UUID(player_data["id"]) for player_data in data["players"]]
         for player_data in data["players"]:
             player = self.get_player(player_id=UUID(player_data["id"]))
             if player is not None:
@@ -255,6 +254,7 @@ class Session(Broadcaster):
                 player.hand = dict_to_pokerhand(player_data["hand"])
                 player.currentbet = player_data["currentbet"]
                 player.status = PlayerStatus(player_data['status'])
+        self.side_pots: List[SidePot] = [SidePot.from_dict(data=pot, players=self.players) for pot in data["side_pots"]]
         return data    
 
     async def set_data(self, data: dict) -> None:
