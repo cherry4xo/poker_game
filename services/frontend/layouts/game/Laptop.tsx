@@ -102,7 +102,7 @@ export default function Game() {
                         <HStack w='90px' h='60px' spacing='4px' pos='absolute' top='-70px'>
                             {player.hand.cards
                                 .map((card: any) => {
-                                    if (game.stage === SessionStage.SHOWDOWN) {
+                                    if (player.id === user?.uuid || game.stage === SessionStage.SHOWDOWN) {
                                         return card;
                                     } else {
                                         return undefined;
