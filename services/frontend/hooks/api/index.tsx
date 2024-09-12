@@ -7,7 +7,7 @@ import { useWs } from '@/contexts/SocketContext';
 import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
 import { addChatMsg, setChatHistory, setLoading, setTyping, setUser, stopLoading } from '@/redux/miscSlice';
-import { deleteAuth, getAuth, setAuth } from './cookiesStore';
+import { deleteAuth, getAuth, setAuth } from './localStore';
 import { usePathname } from 'next/navigation';
 import { useWinnersModal } from '@/contexts';
 
@@ -25,7 +25,7 @@ export function useApi() {
         { method, url, body = {}, headers = {}, onSuccess }:
             { method: Method, url: string, body?: any, headers?: any, onSuccess?: (data: any) => void }
     ) => {
-        const auth = await getAuth();
+        const auth = getAuth();
 
         try {
             const Authorization = !!auth.token_type ? `${auth.token_type.charAt(0).toUpperCase() + auth.token_type.slice(1)} ${auth.access_token}` : '';
@@ -96,7 +96,8 @@ export function useApi() {
     }), []);
 
     const signout = useCallback(() => {
-        deleteAuth().then(() => window.location.href = '/');
+        deleteAuth();
+        window.location.href = '/';
     }, []);
 
     const join = useCallback(async (game_id: string) => await exec({
@@ -121,7 +122,7 @@ export function useApi() {
             ws.current = null;
         }
 
-        const auth = await getAuth();
+        const auth = getAuth();
         const socket = new WebSocket(`wss://api.cherry4xo.ru/poker_game/game/${auth.access_token}`);
 
         function setWsStatus(state: number) {
