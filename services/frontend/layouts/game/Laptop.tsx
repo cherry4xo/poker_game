@@ -116,8 +116,10 @@ export default function Game() {
                             return undefined;
                         } else if (game.stage === SessionStage.FLOP) {
                             return i <= 2 ? card : undefined;
-                        } else if (game.stage === SessionStage.RIVER) {
+                        } else if (game.stage === SessionStage.TURN) {
                             return i <= 3 ? card : undefined;
+                        } else if (game.stage === SessionStage.RIVER) {
+                            return i <= 4 ? card : undefined;
                         } else {
                             return card;
                         }
