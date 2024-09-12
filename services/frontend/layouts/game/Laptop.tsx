@@ -110,7 +110,19 @@ export default function Game() {
         <VStack w='100%' spacing='12px'>
             <HStack spacing='10px' h='100px'>
                 {/* #kostyl */}
-                {game.board.cards.map((card: any, i: number) => <Card key={i} i={i} data={game.stage === SessionStage.PREFLOP ? undefined : card} />)}
+                {game.board.cards
+                    .map((card: any, i: number) => {
+                        if (game.stage === SessionStage.PREFLOP) {
+                            return undefined;
+                        } else if (game.stage === SessionStage.FLOP) {
+                            return i <= 2 ? card : undefined;
+                        } else if (game.stage === SessionStage.RIVER) {
+                            return i <= 3 ? card : undefined;
+                        } else {
+                            return card;
+                        }
+                    })
+                    .map((card: any, i: number) => <Card key={i} i={i} data={card} />)}
             </HStack>
 
             {game.status === SessionStatus.LOBBY
