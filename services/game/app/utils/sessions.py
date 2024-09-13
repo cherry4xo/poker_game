@@ -369,7 +369,9 @@ class Session(Broadcaster):
             ans = await self.pass_board(player_id=player.id)
             await self.handle_answer(answer=ans)
         elif data["type"] == "check":
+            print("check:", data)
             ans = await self.check(player_id=player.id)
+            print(ans)
             await self.handle_answer(answer=ans)
         elif data["type"] == "new_message":
             ans = await self.send_chat_message(player_id=player.id, message=data["message"])
@@ -394,7 +396,7 @@ class Session(Broadcaster):
 
     async def handle_answer(self, answer) -> None:
         if answer["type"] == "success":
-            if answer["message"] in ("bet", "call", "raise", "pass", "start"):
+            if answer["message"] in ("bet", "call", "raise", "pass", "start", "check"):
                 data = {}
                 data.update(self.data)
                 data.update({"allowed_actions": answer["allowed_actions"]})
@@ -460,7 +462,7 @@ class Session(Broadcaster):
         if self.status != SessionStatus.GAME:
             return allowed_actions
         player = self.get_player(self.seats[self.current_player])
-        if player.currentbet == self.current_bet:
+        if self.current_bet == 0:
             allowed_actions.append("check")
 
         # The player can call if there is a higher bet they haven't matched
@@ -555,7 +557,7 @@ class Session(Broadcaster):
                 continue
             elif player.status != PlayerStatus.CHECK:
                 all_checked = False
-            elif player.status not in (PlayerStatus.CALL, PlayerStatus.BET, PlayerStatus.RAISE, PlayerStatus.ALL_IN):
+            elif player.status not in (PlayerStatus.CALL, PlayerStatus.BET, PlayerStatus.RAISE, PlayerStatus.ALL_IN) or (player.currentbet != self.current_bet):
                 all_called = False
         if all_checked and (self.current_bet == 0.0):
             return all_checked
@@ -868,25 +870,8 @@ class Session(Broadcaster):
                 "type": "error",
                 "message": "now is not this user move"
             }
-        for seat in self.seats:
-            if seat is not None:
-                player = self.get_player(player_id=seat)
-                if player.currentbet != self.current_bet:
-                    if player.balance != 0:
-                        return {
-                            "type": "success",
-                            "message": "not_ready_for_check",
-                            "allowed_actions": await self.check_allowed_actions()
-                        }
-                    
-        for seat in self.seats:
-            if seat is not None:
-                player = self.get_player(player_id=seat)
-                player.currentbet = 0.0
-                
-        self.current_bet = 0.0
-        self.stage = SessionStage((self.stage.value + 1) % 5)
-        self.current_player = self.dealer
+        player = self.get_player(player_id=player_id)
+        await player._check()
         await self.save()
 
         next_stage = await self.check_if_move_to_next_stage()
@@ -898,7 +883,7 @@ class Session(Broadcaster):
 
         return {
             "type": "success",
-            "message": "checked",
+            "message": "check",
             "data": self.data,
             "allowed_actions": await self.check_allowed_actions()
         }
