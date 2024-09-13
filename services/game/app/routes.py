@@ -163,9 +163,6 @@ async def webscoket_endpoint(
                         await session.send_all_data(data)
                     else:
                         await session.send_all_data(ans)
-            elif data["type"] == "root":
-                ans = await session.get_winners()
-                await session.send_all_data({"winners": ans})
             elif data["type"] == "exit":
                 ans = await session.remove_player(player.id)
                 await session.send_all_data(session.data)

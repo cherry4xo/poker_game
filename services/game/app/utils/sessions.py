@@ -208,22 +208,6 @@ class Session(Broadcaster):
         return session
 
     # COMPLETE
-    @classmethod
-    async def get_data_by_uuid(cls, session_id: UUID4) -> dict:
-        """get dict game info by Session object uuid
-
-        Args:
-            session_id (UUID4): Session object uuid
-
-        Returns:
-            dict: Session info dict formatted
-        """        
-        async with r.pipeline(transaction=True) as pipe:
-            data_json = (await (pipe.get(f"session:{session_id}").execute()))[0]
-        data: dict = json.loads(data_json)
-        return data
-
-    # COMPLETE
     # NOTE for existing Session object
     async def get_data(self) -> dict:
         async with r.pipeline(transaction=True) as pipe:
@@ -364,6 +348,61 @@ class Session(Broadcaster):
                 "side_pots": [side_pot.dict() for side_pot in self.side_pots],
             }
         await self.set_data(data=self.data)
+
+    async def handle_message(self, data, player: Player):
+        if data["type"] == "take_seat":
+            ans = await self.take_seat(player_id=player.id, seat_num=data["seat_num"])
+            await self.send_all_data(self.data)
+        elif data["type"] == "start": 
+            ans = await self.start_game()
+            await self.handle_answer(answer=ans)
+        elif data["type"] == "bet":
+            ans = await self.bet(player_id=player.id, value=data["value"])
+            await self.handle_answer(answer=ans)
+        elif data["type"] == "call":
+            ans = await self.call(player_id=player.id)
+            await self.handle_answer(answer=ans)
+        elif data["type"] == "raise": 
+            ans = await self.call(player_id=player.id)
+            await self.handle_answer(answer=ans)
+        elif data["type"] == "pass":
+            ans = await self.pass_board(player_id=player.id)
+            await self.handle_answer(answer=ans)
+        elif data["type"] == "check":
+            ans = await self.check(player_id=player.id)
+            await self.handle_answer(answer=ans)
+        elif data["type"] == "new_message":
+            ans = await self.send_chat_message(player_id=player.id, message=data["message"])
+        elif data["type"] == "typing_start":
+            data = {
+                "type": "typing_start",
+                "id": player.id
+            }
+            await self.send_all_data_except_self(data, player.id)
+        elif data["type"] == "typing_end":
+            data = {
+                "type": "typing_end",
+                "id": player.id
+            }
+            await self.send_all_data_except_self(data, player.id)
+
+        
+    async def handle_answer(self, answer) -> None:
+        if answer["type"] == "success":
+            if answer["message"] in ("bet", "call", "raise", "pass"):
+                data = {}
+                data.update(self.data)
+                data.update({"allowed_actions": answer["allowed_actions"]})
+                await self.send_all_data(data)
+            elif answer["message"] == "ends":
+                data = {}
+                data.update(self.data)
+                data.update({"winners": answer["winners"]})
+                await self.send_all_data(data)
+        elif answer["type"] == "chat_incoming":
+            await self.send_all_data(answer)
+        else:
+            await self.send_all_data(answer)
 
     async def take_seat(self, player_id: UUID4, seat_num: int) -> dict:
         await self.get_data()
@@ -530,7 +569,7 @@ class Session(Broadcaster):
 
         return {
             "type": "success",
-            "message": "user betted",
+            "message": "bet",
             "data": self.data,
             "allowed_actions": await self.check_allowed_actions()
         }
@@ -569,7 +608,7 @@ class Session(Broadcaster):
 
         return {
             "type": "success",
-            "message": "user called",
+            "message": "call",
             "data": self.data,
             "allowed_actions": await self.check_allowed_actions()
         }
@@ -614,7 +653,7 @@ class Session(Broadcaster):
 
         return {
             "type": "success",
-            "message": "user raised",
+            "message": "rais",
             "data": self.data,
             "allowed_actions": await self.check_allowed_actions()
         }
@@ -656,7 +695,7 @@ class Session(Broadcaster):
 
         return {
             "type": "success",
-            "message": "user passed",
+            "message": "pass",
             "data": self.data,
             "allowed_actions": await self.check_allowed_actions()
         }
