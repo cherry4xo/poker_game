@@ -369,9 +369,7 @@ class Session(Broadcaster):
             ans = await self.pass_board(player_id=player.id)
             await self.handle_answer(answer=ans)
         elif data["type"] == "check":
-            print("check:", data)
             ans = await self.check(player_id=player.id)
-            print(ans)
             await self.handle_answer(answer=ans)
         elif data["type"] == "new_message":
             ans = await self.send_chat_message(player_id=player.id, message=data["message"])
