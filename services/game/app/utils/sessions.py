@@ -385,11 +385,16 @@ class Session(Broadcaster):
                 "id": player.id
             }
             await self.send_all_data_except_self(data, player.id)
+        else:
+            data = {
+                "type": "error",
+                "message": "incorrect message"
+            }
+            await self.send_all_data(data)
 
-        
     async def handle_answer(self, answer) -> None:
         if answer["type"] == "success":
-            if answer["message"] in ("bet", "call", "raise", "pass"):
+            if answer["message"] in ("bet", "call", "raise", "pass", "start"):
                 data = {}
                 data.update(self.data)
                 data.update({"allowed_actions": answer["allowed_actions"]})
@@ -478,7 +483,12 @@ class Session(Broadcaster):
     async def get_count_active_players(self):
         count = 0
         for player in self.players:
-            if player.status == PlayerStatus.PLAYING:
+            if player.status in (PlayerStatus.ALL_IN, 
+                                 PlayerStatus.BET, 
+                                 PlayerStatus.CALL, 
+                                 PlayerStatus.CHECK, 
+                                 PlayerStatus.WAITING, 
+                                 PlayerStatus.RAISE):
                 count += 1
         return count
         
@@ -502,7 +512,7 @@ class Session(Broadcaster):
 
         for player in self.players:
             player.hand.cards.clear()
-            player.status = PlayerStatus.PLAYING
+            player.status = PlayerStatus.WAITING
             for _ in range(2):
                 card = self.deck.deal_card()
                 player.hand.add_card(card)
@@ -530,10 +540,42 @@ class Session(Broadcaster):
 
         return {
             "type": "success",
-            "message": "started game",
+            "message": "start",
             "data": self.data,
             "allowed_actions": await self.check_allowed_actions()
         }
+    
+    async def check_if_move_to_next_stage(self) -> bool:
+        all_checked = True
+        all_called = True
+        if (await self.get_count_active_players() == 1):
+            return True
+        for player in self.players:
+            if player.status in (PlayerStatus.NOT_READY, PlayerStatus.PASS):
+                continue
+            elif player.status != PlayerStatus.CHECK:
+                all_checked = False
+            elif player.status not in (PlayerStatus.CALL, PlayerStatus.BET, PlayerStatus.RAISE, PlayerStatus.ALL_IN):
+                all_called = False
+        if all_checked and (self.current_bet == 0.0):
+            return all_checked
+        if all_called and (self.current_bet != 0.0):
+            return all_called
+        return False
+    
+    async def check_if_showdown(self) -> None:
+        if self.stage == SessionStage.SHOWDOWN:
+            winners = await self.get_winners()
+            await self.distribute_winnings()
+
+            await self.end_game()
+
+            return {
+                "type": "success",
+                "message": "ends",
+                "winners": winners
+            }
+        return None
     
     async def bet(self, player_id: UUID4, value: float) -> dict:
         allowed = await self.check_allowed_actions()
@@ -566,6 +608,13 @@ class Session(Broadcaster):
         next_player_index = await self._get_next_busy_seat(player.id)
         self.current_player = next_player_index
         await self.save()
+
+        next_stage = await self.check_if_move_to_next_stage()
+        if next_stage:
+            await self.move_next_stage()
+            showdown = await self.check_if_showdown()
+            if showdown is not None:
+                return showdown
 
         return {
             "type": "success",
@@ -605,6 +654,13 @@ class Session(Broadcaster):
         next_player_index = await self._get_next_busy_seat(player.id)
         self.current_player = next_player_index
         await self.save()
+
+        next_stage = await self.check_if_move_to_next_stage()
+        if next_stage:
+            await self.move_next_stage()
+            showdown = await self.check_if_showdown()
+            if showdown is not None:
+                return showdown
 
         return {
             "type": "success",
@@ -651,6 +707,13 @@ class Session(Broadcaster):
         self.current_player = next_player_index
         await self.save()
 
+        next_stage = await self.check_if_move_to_next_stage()
+        if next_stage:
+            await self.move_next_stage()
+            showdown = await self.check_if_showdown()
+            if showdown is not None:
+                return showdown
+
         return {
             "type": "success",
             "message": "rais",
@@ -679,19 +742,12 @@ class Session(Broadcaster):
         self.current_player = next_player_index
         await self.save()
 
-
-        count_players = await self.get_count_active_players()
-        if count_players < 2:
-            winners = await self.get_winners()
-            await self.distribute_winnings()
-
-            await self.end_game()
-
-            return {
-                "type": "success",
-                "message": "ends",
-                "winners": winners
-            }
+        next_stage = await self.check_if_move_to_next_stage()
+        if next_stage:
+            await self.move_next_stage()
+            showdown = await self.check_if_showdown()
+            if showdown is not None:
+                return showdown
 
         return {
             "type": "success",
@@ -792,6 +848,17 @@ class Session(Broadcaster):
                             final_winners.append(winner)
 
                 return final_winners
+            
+    async def move_next_stage(self):
+        for seat in self.seats:
+            if seat is not None:
+                player = self.get_player(player_id=seat)
+                player.status = PlayerStatus.WAITING
+        
+        self.current_bet = 0.0
+        self.stage = SessionStage((self.stage.value + 1) % 5)
+        self.current_player = self.dealer
+        await self.save()
     
     async def check(self, player_id: UUID4) -> dict:
         await self.get_data()
@@ -822,17 +889,12 @@ class Session(Broadcaster):
         self.current_player = self.dealer
         await self.save()
 
-        if self.stage == SessionStage.SHOWDOWN:
-            winners = await self.get_winners()
-            await self.distribute_winnings()
-
-            await self.end_game()
-
-            return {
-                "type": "success",
-                "message": "ends",
-                "winners": winners
-            }
+        next_stage = await self.check_if_move_to_next_stage()
+        if next_stage:
+            await self.move_next_stage()
+            showdown = await self.check_if_showdown()
+            if showdown is not None:
+                return showdown
 
         return {
             "type": "success",

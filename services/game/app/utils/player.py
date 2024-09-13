@@ -173,10 +173,13 @@ def dict_to_pokerhand(hand_dict):
 class PlayerStatus(Enum):
     NOT_READY = 0
     READY = 1
-    PLAYING = 2
-    STAYING = 3
-    PASS = 4
-    ALL_IN = 5
+    PASS = 2
+    CHECK = 3
+    BET = 4
+    CALL = 5
+    RAISE = 6
+    ALL_IN = 7
+    WAITING = 8
 
 
 class Player:
@@ -200,7 +203,7 @@ class Player:
         player.status = PlayerStatus(data['status'])
         return player
     
-    async def _bet(self, value: float) -> Optional[bool]:
+    async def _bet(self, value: float) -> float | None:
         if self.status == PlayerStatus.ALL_IN:
             return 0
         try:
@@ -211,13 +214,13 @@ class Player:
             else:
                 delta = value
                 self.balance -= delta
+                self.status = PlayerStatus.BET
             self.currentbet += delta
-            self.status = PlayerStatus.STAYING
             return delta
         except Exception:
             return None
         
-    async def _call(self, bet: float) -> Optional[float]:
+    async def _call(self, bet: float) -> float | None:
         if self.status == PlayerStatus.ALL_IN:
             return 0
         try:
@@ -231,6 +234,7 @@ class Player:
                 delta = bet - self.currentbet
                 self.currentbet = bet
                 self.balance -= delta
+                self.status = PlayerStatus.CALL
             return delta
         except Exception:
             return None
@@ -242,7 +246,7 @@ class Player:
         except Exception:
             return None
         
-    async def _raise(self, value: float) -> Optional[bool]:
+    async def _raise(self, value: float) -> float | None:
         if self.status == PlayerStatus.ALL_IN:
             return 0
         try:
@@ -253,10 +257,17 @@ class Player:
             else:
                 delta = value
                 self.balance -= delta
+                self.status = PlayerStatus.RAISE
             self.currentbet += delta
             return delta
         except Exception:
             return None
+        
+    async def _check(self) -> None:
+        try:
+            self.status = PlayerStatus.CHECK
+        except Exception:
+            pass
 
     @property
     def dict(self) -> dict:
