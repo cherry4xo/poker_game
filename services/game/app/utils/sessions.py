@@ -363,7 +363,7 @@ class Session(Broadcaster):
             ans = await self.call(player_id=player.id)
             await self.handle_answer(answer=ans)
         elif data["type"] == "raise": 
-            ans = await self.raise_bet(player_id=player.id)
+            ans = await self.raise_bet(player_id=player.id, value=data["value"])
             await self.handle_answer(answer=ans)
         elif data["type"] == "pass":
             ans = await self.pass_board(player_id=player.id)
