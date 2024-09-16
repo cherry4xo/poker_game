@@ -553,9 +553,9 @@ class Session(Broadcaster):
         for player in self.players:
             if player.status in (PlayerStatus.NOT_READY, PlayerStatus.PASS):
                 continue
-            elif player.status != PlayerStatus.CHECK:
+            if player.status != PlayerStatus.CHECK:
                 all_checked = False
-            elif player.status not in (PlayerStatus.CALL, PlayerStatus.BET, PlayerStatus.RAISE, PlayerStatus.ALL_IN) or (player.currentbet != self.current_bet):
+            if (player.status not in (PlayerStatus.CALL, PlayerStatus.BET, PlayerStatus.RAISE, PlayerStatus.ALL_IN)) or (player.currentbet != self.current_bet):
                 all_called = False
         if all_checked and (self.current_bet == 0.0):
             return all_checked
@@ -854,6 +854,7 @@ class Session(Broadcaster):
             if seat is not None:
                 player = self.get_player(player_id=seat)
                 player.status = PlayerStatus.WAITING
+                player.currentbet = 0.0
         
         self.current_bet = 0.0
         self.stage = SessionStage((self.stage.value + 1) % 5)
@@ -870,6 +871,9 @@ class Session(Broadcaster):
             }
         player = self.get_player(player_id=player_id)
         await player._check()
+        await self.save()
+        next_player_index = await self._get_next_busy_seat(player.id)
+        self.current_player = next_player_index
         await self.save()
 
         next_stage = await self.check_if_move_to_next_stage()
