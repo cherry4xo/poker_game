@@ -34,6 +34,8 @@ export const gameSlice = createSlice({
         setGameState: (state, action: PayloadAction<IGame>) => {
             const res = structuredClone(action.payload);
 
+            if (!res.allowed_actions.includes('call')) res.allowed_actions.push('call');
+
             res.seats = res.seats.map((s: string) => (s === 'None' ? null : s));
             Object.assign(state, res);
         }
