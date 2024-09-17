@@ -92,100 +92,13 @@ async def webscoket_endpoint(
     try:
         while True:
             data = await websocket.receive_json()
-            if data["type"] == "take_seat":
-                ans = await session.take_seat(user_id, seat_num=data["seat_num"])
-                await session.send_all_data(session.data)
-            elif data["type"] == "start":
-                ans = await session.start_game()
-                if ans["type"] == "success":
-                    data = {}
-                    data.update(session.data)
-                    data.update({"allowed_actions": ans["allowed_actions"]})
-                    await session.send_all_data(data)
-                else:
-                    await session.send_all_data(ans)
-            elif data["type"] == "bet":
-                ans = await session.bet(player_id=user_id, value=data["value"])
-                if ans["type"] == "success":
-                    data = {}
-                    data.update(session.data)
-                    data.update({"allowed_actions": ans["allowed_actions"]})
-                    await session.send_all_data(data)
-                else:
-                    await session.send_all_data(ans)
-            elif data["type"] == "call":
-                ans = await session.call(player_id=user_id)
-                if ans["type"] == "success":
-                    data = {}
-                    data.update(session.data)
-                    data.update({"allowed_actions": ans["allowed_actions"]})
-                    await session.send_all_data(data)
-                else:
-                    await session.send_all_data(ans)
-            elif data["type"] == "raise":
-                ans = await session.raise_bet(player_id=user_id, value=data["value"])
-                if ans["type"] == "success":
-                    data = {}
-                    data.update(session.data)
-                    data.update({"allowed_actions": ans["allowed_actions"]})
-                    await session.send_all_data(data)
-                else:
-                    await session.send_all_data(ans)
-            elif data["type"] == "pass":
-                ans = await session.pass_board(player_id=user_id)
-                if ans["message"] == "ends":
-                    data = {}
-                    data.update(session.data)
-                    data.update({"winners": ans["winners"]})
-                    await session.send_all_data(data)
-                else:
-                    data = {}
-                    if ans["type"] == "success":
-                        data = {}
-                        data.update(session.data)
-                        data.update({"allowed_actions": ans["allowed_actions"]})
-                        await session.send_all_data(data)
-                    else:
-                        await session.send_all_data(ans)
-            elif data["type"] == "check":
-                ans = await session.check(player_id=user_id)
-                if ans["message"] == "ends":
-                    data = {}
-                    data.update(session.data)
-                    data.update({"winners": ans["winners"]})
-                    await session.send_all_data(data)
-                else:
-                    data = {}
-                    if ans["type"] == "success":
-                        data = {}
-                        data.update(session.data)
-                        data.update({"allowed_actions": ans["allowed_actions"]})
-                        await session.send_all_data(data)
-                    else:
-                        await session.send_all_data(ans)
-            elif data["type"] == "root":
-                ans = await session.get_winners()
-                await session.send_all_data({"winners": ans})
-            elif data["type"] == "exit":
+            if data["type"] == "exit":
                 ans = await session.remove_player(player.id)
                 await session.send_all_data(session.data)
                 await websocket.close(code=1000)
                 break
-            elif data["type"] == "new_message":
-                ans = await session.send_chat_message(player_id=user_id, message=data["message"])
-                await session.send_all_data(ans)
-            elif data["type"] == "typing_start":
-                data = {
-                    "type": "typing_start",
-                    "id": player.id
-                }
-                await session.send_all_data_except_self(data, player.id)
-            elif data["type"] == "typing_end":
-                data = {
-                    "type": "typing_end",
-                    "id": player.id
-                }
-                await session.send_all_data_except_self(data, player.id)
+            else:
+                await session.handle_message(data=data, player=player)
     except WebSocketDisconnect:
         player.websocket = None
         await session.send_all_data(session.data)
