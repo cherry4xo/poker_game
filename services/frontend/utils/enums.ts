@@ -15,7 +15,11 @@ export enum SessionStage {
 export enum PlayerStatus {
     NOT_READY = 0,
     READY = 1,
-    PLAYING = 2,
-    STAYING = 3,
-    PASS = 4
+    PASS = 2,
+    CHECK = 3,
+    BET = 4,
+    CALL = 5,
+    RAISE = 6,
+    ALL_IN = 7,
+    WAITING = 8
 }
