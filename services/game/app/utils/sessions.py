@@ -549,8 +549,6 @@ class Session(Broadcaster):
     async def check_if_move_to_next_stage(self) -> bool:
         all_checked = True
         all_called = True
-        if (await self.get_count_active_players() == 1):
-            return True
         for player in self.players:
             if player.status in (PlayerStatus.NOT_READY, PlayerStatus.PASS):
                 continue
@@ -743,6 +741,11 @@ class Session(Broadcaster):
         self.current_player = next_player_index
         await self.save()
 
+        if (await self.get_count_active_players() == 1):
+            self.stage = SessionStage.SHOWDOWN
+            showdown = await self.check_if_showdown()
+            return showdown
+
         next_stage = await self.check_if_move_to_next_stage()
         if next_stage:
             await self.move_next_stage()
@@ -790,7 +793,7 @@ class Session(Broadcaster):
             if player_id is None:
                 continue
             player = self.get_player(player_id=player_id)
-            if index == best_player:
+            if index == best_player or player.status == PlayerStatus.PASS:
                 continue
             player_hand = player.hand
             hand_value = player_hand.evaluate()
