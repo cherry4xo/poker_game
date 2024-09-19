@@ -717,7 +717,7 @@ class Session(Broadcaster):
 
         return {
             "type": "success",
-            "message": "rais",
+            "message": "raise",
             "data": self.data,
             "allowed_actions": await self.check_allowed_actions()
         }
