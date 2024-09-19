@@ -373,6 +373,7 @@ class Session(Broadcaster):
             await self.handle_answer(answer=ans)
         elif data["type"] == "new_message":
             ans = await self.send_chat_message(player_id=player.id, message=data["message"])
+            await self.handle_answer(answer=ans)
         elif data["type"] == "typing_start":
             data = {
                 "type": "typing_start",
