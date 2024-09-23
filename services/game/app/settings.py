@@ -22,6 +22,9 @@ DB_CONNECTIONS = {
         "default": DB_URL,
     }
 
+KAFKA_BOOTSTRAP_SERVICE = os.getenv("KAFKA_BOOTSTRAP_SERVICE")
+CONSUME_TOPIC = os.getenv("CONSUME_TOPIC")
+
 SECRET_KEY = os.getenv("SECRET_KEY", default="".join([random.choice(string.ascii_letters) for _ in range(32)]))
 CLIENT_ID = os.getenv("CLIENT_ID", default="".join([random.choice(string.ascii_letters) for _ in range(32)]))
 

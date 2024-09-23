@@ -1,0 +1,8 @@
+aiokafka
+redis
+redis[hiredis]   
+pytest
+python-dotenv
+passlib
+python-multipart
+apscheduler

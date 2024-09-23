@@ -10,6 +10,7 @@ services:
       - redis
       - users-postgres
     command: python3 -u -m uvicorn main:app --host 0.0.0.0 --port 8083
+
   users:
     build: ./services/users
     restart: unless-stopped
@@ -22,6 +23,7 @@ services:
     command: python3 -u -m uvicorn main:app --host 0.0.0.0 --port 8083
     volumes:
       - "./migrations:/usr/src/users/migrations"
+
   users-postgres:
     image: postgres:alpine
     restart: unless-stopped
@@ -35,6 +37,7 @@ services:
       - 5432
     volumes:
       - "users-postgres:/data/db"
+
   game: 
     build: ./services/game
     restart: unless-stopped
@@ -45,6 +48,15 @@ services:
       - auth
       - users-postgres
     command: python3 -u -m uvicorn main:app --host 0.0.0.0 --port 8083
+
+  session-provider:
+    build: ./services/session_provider
+    restart: unless-stopped
+    links: 
+      - kafka
+      - redis
+    command: python3 -u main.py
+
   redis:
     image: redis:alpine
     restart: unless-stopped
@@ -54,29 +66,55 @@ services:
       - "6378:6379"
     volumes:
       - "redis:/data/cache"
-  # krakend_ce:
-  #   image: devopsfaith/krakend:watch
-  #   volumes:
-  #     - ./services/krakend/config:/etc/krakend
-  #   ports:
-  #     - "1234:1234"
-  #     - "8080:8080"
-  #     - "8090:8090"
-  #   command: [ "run", "-d", "-c", "/etc/krakend/krakend.json" ]
-  #   links:
-  #     - users
-  #     - auth
-  #   depends_on:
-  #     - users
-  #     - auth
-  #   environment:
-  #     - CLIENT_SECRET=UFEubVvILIcqQwDusHfbMIBGEAVdIgou
-  #     - CLIENT_ID=HFLHNhgBmeDRDQFvRRjmxWSTNzNLWCQO
+
+  krakend_ce:
+    image: devopsfaith/krakend:watch
+    volumes:
+      - ./services/krakend/config:/etc/krakend
+    ports:
+      - "1234:1234"
+      - "8080:8080"
+      - "8090:8090"
+    command: [ "run", "-d", "-c", "/etc/krakend/krakend.json" ]
+    links:
+      - users
+      - auth
+      - game
+    depends_on:
+      - users
+      - auth
+      - game
+    environment:
+      - CLIENT_SECRET=UFEubVvILIcqQwDusHfbMIBGEAVdIgou
+      - CLIENT_ID=HFLHNhgBmeDRDQFvRRjmxWSTNzNLWCQO
+
   frontend:
     build: ./services/frontend
     restart: unless-stopped
     ports:
       - "3010:3000"
+
+  zookeeper:
+    image: "bitnami/zookeeper:latest"
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    volumes:
+      - ./zk-data:/var/lib/zookeeper/data \
+      - ./zk-txn-logs:/var/lib/zookeeper/log \
+
+  kafka:
+    image: "bitnami/kafka:latest"
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+    volumes:
+      - ./kafka-data:/var/lib/kafka/data
 
 volumes:
   redis:

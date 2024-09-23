@@ -2,7 +2,7 @@ FROM python:3.11-slim-buster
 
 ENV PYTHONPATH=/home/code/ PYTHONHASHSEED=0
 
-WORKDIR /usr/src/game
+WORKDIR /usr/src/inspector
 
 COPY app/ app/
 COPY ./.env ./requirements.txt ./main.py ./

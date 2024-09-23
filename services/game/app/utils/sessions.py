@@ -15,6 +15,7 @@ from app.utils.redis import r, ping_redis_connection
 from app.utils.broadcast import Broadcaster
 from app.utils.chat import Chat, Message
 from app.utils.player import Player, PlayerStatus, Deck, Card, Hand, dict_to_pokerhand
+from app.utils.consumer import start_consumer
 from app import settings
 
 
@@ -317,9 +318,6 @@ class Session(Broadcaster):
     # COMPLETE
     @classmethod
     async def delete(cls, session_id: UUID4) -> bool:
-        session = await cls.get_session_by_uuid(session_id=session_id)
-        if session is None:
-            return False
         async with r.pipeline(transaction=True) as pipe:
             await (pipe.delete(f"session:{session_id}").execute())
         return True
@@ -346,6 +344,7 @@ class Session(Broadcaster):
                 "owner": str(self.owner),
                 "main_pot": self.main_pot,
                 "side_pots": [side_pot.dict() for side_pot in self.side_pots],
+                "last_activity": datetime.now().timestamp()
             }
         await self.set_data(data=self.data)
 
@@ -991,6 +990,7 @@ class SessionsContainer:
             self.sessions.remove(session)
         except ValueError:
             return False
+        await Session.delete(session_id=uuid)
         return True
 
     # COMPLETE
@@ -1081,3 +1081,15 @@ def create_session_container() -> SessionsContainer:
 
 
 sessions_container = create_session_container()
+
+
+async def provider() -> None:
+    consumer = await start_consumer()
+    try:
+        async for message in consumer:
+            print(message)
+            decoded_message = json.loads(message.value)
+            if decoded_message["type"] == "delete_session":
+                await sessions_container.remove_session_by_uuid(uuid=UUID(decoded_message["uuid"]))
+    finally:
+        await consumer.stop()
