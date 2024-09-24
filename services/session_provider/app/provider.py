@@ -8,6 +8,7 @@ from app import settings
 
 
 async def provider(event_loop):
+    produce_message = {"type": "delete_session", "value": []}
     producer = get_producer(event_loop=event_loop)
     await ping_redis_connection(r)
     async with r.pipeline(transaction=True) as pipe:
@@ -17,6 +18,6 @@ async def provider(event_loop):
             data_now = datetime.now().timestamp()
             data: dict = json.loads(data_json)
             if data_now - data["last_activity"] > settings.DEFAULT_SESSION_DELAY_MINUTES:
-                message_to_produce = {"type": "delete_session", "uuid": data["id"]}
-                message_to_produce = json.dumps(message_to_produce).encode(encoding="utf-8")
-                await producer.send(value=message_to_produce)
+                produce_message["value"].append(data["id"])
+        message_to_produce = json.dumps(produce_message).encode(encoding="utf-8")
+        await producer.send(value=message_to_produce)

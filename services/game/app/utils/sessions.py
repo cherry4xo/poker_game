@@ -1087,9 +1087,9 @@ async def provider() -> None:
     consumer = await start_consumer()
     try:
         async for message in consumer:
-            print(message)
             decoded_message = json.loads(message.value)
             if decoded_message["type"] == "delete_session":
-                await sessions_container.remove_session_by_uuid(uuid=UUID(decoded_message["uuid"]))
+                for session_id in decoded_message["value"]:
+                    await sessions_container.remove_session_by_uuid(uuid=UUID(session_id))
     finally:
         await consumer.stop()
