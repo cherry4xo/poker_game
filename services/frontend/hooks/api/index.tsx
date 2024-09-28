@@ -7,7 +7,7 @@ import { useWs } from '@/contexts/SocketContext';
 import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
 import { addChatMsg, setChatHistory, setLoading, setTyping, setUser, stopLoading } from '@/redux/miscSlice';
-import { deleteAuth, getAuth, setAuth } from './localStore';
+import { deleteAuth, getAuth, hasAuth, setAuth } from './localStore';
 import { usePathname } from 'next/navigation';
 import { useWinnersModal } from '@/contexts';
 
@@ -43,7 +43,7 @@ export function useApi() {
             return true;
         } catch (err) {
             // @ts-ignore
-            const detail = err?.response?.data?.detail ?? 'unknown error';
+            const detail = err?.response?.data?.detail[0].msg ?? err?.response?.data?.detail ?? 'unknown error';
             // @ts-ignore
             const code = err?.status ?? 401;
 
@@ -51,7 +51,6 @@ export function useApi() {
                 if (pathname !== '/') signout();
             } else toast({
                 status: 'error',
-                duration: 3000,
                 title: 'Error',
                 description: detail
             });
@@ -74,7 +73,6 @@ export function useApi() {
 
             toast({
                 status: 'success',
-                duration: 3000,
                 title: 'Успешно',
                 description: 'Вы вошли!'
             });
@@ -179,13 +177,17 @@ export function useApi() {
         ws.current = socket;
     }, []);
 
-    const validate = useCallback(async () => await exec({
-        method: 'get',
-        url: '/poker_game/game/validate',
-        onSuccess(data: IUser) {
-            dispatch(setUser(data));
-        }
-    }), []);
+    const validate = useCallback(async () => {
+        if (!hasAuth()) return;
+
+        await exec({
+            method: 'get',
+            url: '/poker_game/game/validate',
+            onSuccess(data: IUser) {
+                dispatch(setUser(data));
+            }
+        });
+    }, []);
 
     return {
         async load(func: string) {

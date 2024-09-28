@@ -4,7 +4,7 @@ import { AuthForm } from '@/components/Common';
 import { useState } from 'react';
 
 export default function Auth() {
-    const [login, setLogin] = useState(true);
+    const [login, setLogin] = useState(false);
 
     return <VStack w='100%' justify='center' spacing='24px'>
         <AuthForm login={login} />

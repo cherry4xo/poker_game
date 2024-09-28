@@ -22,13 +22,13 @@ export default function Game() {
     const { user, href, device } = useSelector(state => state.misc);
     const ws = useWs();
 
-    return <Flex pos='relative' w={device !== 'phone' ? '60vw' : '90vw'} h={device !== 'phone' ? '50vh' : '70svh'} border='36px solid black' bg='#063605' rounded='full' justify='center' align='center'>
+    return <Flex pos='relative' w='60vw' h={device !== 'phone' ? '50vh' : '60svh'} border='36px solid black' bg='#063605' rounded='full' justify='center' align='center'>
         <Box w='95%' h='90%' pos='absolute' top={0} left={0} transform='translate(2.5%, 5%)' rounded='full' border='2px solid black' />
 
-        <VStack pos='fixed' bottom={0} right={0} spacing={0} align='end' fontSize='12px' p='10px' opacity={.5} pointerEvents='none'>
+        {device !== 'phone' && <VStack pos='fixed' bottom={0} right={0} spacing={0} align='end' fontSize='12px' p='10px' opacity={.5} pointerEvents='none'>
             <Text>ws status: <Text as='span' id='wsstatus' color='cyan' fontWeight={600}>unknown</Text></Text>
             <Text>user_id: {user?.uuid}</Text>
-        </VStack>
+        </VStack>}
 
         {game.seats.includes(user?.uuid) && <Box pos='fixed' bottom={0} left={0} zIndex={1}><ChatBlock /></Box>}
         {game.players.length >= 2 && <Box pos='fixed' bottom='30px' right='30px'><Controls /></Box>}
@@ -70,7 +70,8 @@ export default function Game() {
                     bg={seatTaken ? (colors[i] + '33') : 'gray.700'}
                     opacity={seatOpacity}
                     userSelect='none'
-                    p='24px 40px'
+                    p={device !== 'phone' ? '24px 40px' : '12px 20px'}
+                    fontSize={device !== 'phone' ? '18px' : '15px'}
                     fontWeight={600}
                     spacing='14px'
                     rounded='15px'
@@ -86,13 +87,13 @@ export default function Game() {
                             <Sum color='orange'>{player.balance}</Sum>
                         </Box>
 
-                        <Text w='max-content' color={colors[i]} fontSize='18px'>
+                        <Text w='max-content' color={colors[i]}>
                             {player.name}
                             <Text as='span' color='gray' opacity='.5'>{player.id === user?.uuid && ' (вы)'}</Text>
                         </Text>
 
                         <Box w='100%' h='100%' pos='absolute' top={0} left={0} rounded='10px' overflow='hidden'>
-                            <Icon as={FaUser} w='40px' h='40px' color={colors[i]} pos='absolute' opacity={.25} bottom={-1} right={-1} />
+                            <Icon as={FaUser} w={device !== 'phone' ? '40px' : '30px'} h={device !== 'phone' ? '40px' : '30px'} color={colors[i]} pos='absolute' opacity={.25} bottom={-1} right={-1} />
                         </Box>
 
                         {game.status !== SessionStatus.LOBBY && <HStack h='30px' spacing='4px' pos='absolute' bottom='-60px' left='-0px'>

@@ -17,7 +17,7 @@ type IAlias = keyof typeof aliases;
 
 export function AuthForm({ login }: { login?: boolean }) {
     const toast = useToast();
-    const [loading, setLoading] = useState<boolean>(false);
+    const [loading, setLoading] = useState(false);
     const api = useApi();
     const { device } = useSelector(state => state.misc);
 
@@ -32,13 +32,11 @@ export function AuthForm({ login }: { login?: boolean }) {
             if (!login && values.password !== values.repeatedPassword) return toast({
                 status: 'error',
                 title: 'Ошибка',
-                description: 'Пароли не совпадают!',
-                duration: 3000,
-                isClosable: true
+                description: 'Пароли не совпадают!'
             });
 
             setLoading(true);
-            const ok = await api[login ? 'signin' : 'signup'](values);
+            const ok = await (login ? api.signin : api.signup)(values);
             if (!ok) setLoading(false);
         }}
     >

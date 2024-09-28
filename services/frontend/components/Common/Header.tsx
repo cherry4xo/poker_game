@@ -22,9 +22,7 @@ export function Header() {
 
         toast({
             status: 'info',
-            title: 'Вы покинули игру!',
-            duration: 3000,
-            isClosable: true
+            title: 'Вы покинули игру!'
         });
     }, [ws, dispatch, toast]);
 

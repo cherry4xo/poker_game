@@ -1,5 +1,5 @@
 'use client';
-import { HStack, IconButton, Input, Text, VStack } from '@chakra-ui/react';
+import { Button, Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerFooter, DrawerHeader, DrawerOverlay, HStack, IconButton, Input, Text, useDisclosure, VStack } from '@chakra-ui/react';
 import { useCallback, useRef, useState } from 'react';
 import { useWs } from '@/contexts/SocketContext';
 import { useSelector } from '@/redux/hooks';
@@ -8,20 +8,14 @@ import { IoSend } from 'react-icons/io5';
 import { animate } from 'framer-motion';
 import { colors, ease } from '@/utils/misc';
 import { FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { IoChatbubbleSharp } from "react-icons/io5";
 
-export function ChatBlock() {
+export function Interface() {
     const ws = useWs();
     const [text, setText] = useState('');
-    const { chat, device, typing } = useSelector(state => state.misc);
+    const { chat, typing, device } = useSelector(state => state.misc);
     const { seats, players } = useSelector(state => state.game);
-    const [opened, setOpened] = useState(true);
     const time = useRef(null as unknown as NodeJS.Timeout);
-
-    const endTyping = useCallback(() => {
-        clearTimeout(time.current);
-        time.current = null as unknown as NodeJS.Timeout;
-        ws.current.send(JSON.stringify({ type: 'typing_end' }));
-    }, [time]);
 
     const send = useCallback(() => {
         if (text.length <= 0) return;
@@ -30,8 +24,14 @@ export function ChatBlock() {
         setText('');
     }, [text, ws]);
 
-    return <VStack w='100%' p='16px 20px' spacing='14px' id='pablo' pos='relative' bg='gray.800'>
-        <VStack w={device !== 'phone' ? '400px' : '300px'} maxH={device !== 'phone' ? '120px' : '11svh'} fontSize='14px' overflowY='auto' id='chatList'>
+    const endTyping = useCallback(() => {
+        clearTimeout(time.current);
+        time.current = null as unknown as NodeJS.Timeout;
+        ws.current.send(JSON.stringify({ type: 'typing_end' }));
+    }, [time]);
+
+    return <VStack w='100%' h='100%' justify='end'>
+        <VStack w={device !== 'phone' ? '400px' : '100%'} maxH={device !== 'phone' ? '120px' : '100%'} fontSize='14px' overflowY='auto' id='chatList'>
             {chat.length > 0
                 ? chat.map((msg: IMessage, i: number) => <HStack key={i} w='100%' justify='start' spacing='10px'>
                     <Text opacity={.3}>{msg.datetime}</Text>
@@ -80,10 +80,44 @@ export function ChatBlock() {
                 onClick={send}
             />
         </HStack>
-
-        <IconButton aria-label='open chat' icon={opened ? <FaAngleLeft /> : <FaAngleRight />} colorScheme='blackAlpha' rounded='0 25px 0 0' border='1px solid rgba(0,0,0,.75)' h='100%' pos='absolute' bottom='0%' right='-40px' onClick={() => {
-            animate('#pablo', { x: opened ? (device !== 'phone' ? -440 : -340) : 0 }, { duration: 0.5, ease });
-            setOpened(s => !s);
-        }} />
     </VStack>;
+}
+
+export function ChatBlock() {
+    const { device } = useSelector(state => state.misc);
+    const [opened, setOpened] = useState(true);
+    const { isOpen, onOpen, onClose } = useDisclosure();
+
+    return device !== 'phone'
+        ? <VStack w='100%' p='16px 20px' spacing='14px' id='pablo' pos='relative' bg='gray.800'>
+            <Interface />
+
+            <IconButton aria-label='open chat' icon={opened ? <FaAngleLeft /> : <FaAngleRight />} colorScheme='blackAlpha' rounded='0 25px 0 0' border='1px solid rgba(0,0,0,.75)' h='100%' pos='absolute' bottom='0%' right='-40px' onClick={() => {
+                animate('#pablo', { x: opened ? -440 : 0 }, { duration: 0.5, ease });
+                setOpened(s => !s);
+            }} />
+        </VStack>
+        : <>
+            <IconButton icon={<IoChatbubbleSharp />} isRound boxSize='50px' fontSize='20px' aria-label='open chat' pos='fixed' bottom='10px' left='10px' colorScheme='blackAlpha' onClick={onOpen} />
+
+            <Drawer
+                isOpen={isOpen}
+                onClose={onClose}
+                placement='left'
+            >
+                <DrawerOverlay />
+                <DrawerContent bg='black' color='white'>
+                    <DrawerCloseButton />
+
+                    <DrawerHeader>
+                        <Text>Чат</Text>
+                    </DrawerHeader>
+
+                    <DrawerBody pb='20px'>
+                        <Interface />
+                    </DrawerBody>
+
+                </DrawerContent>
+            </Drawer>
+        </>;
 }
