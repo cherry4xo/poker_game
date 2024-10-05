@@ -7,7 +7,7 @@ import { useWs } from '@/contexts/SocketContext';
 import { useDispatch } from '@/redux/hooks';
 import { setGameState } from '@/redux/gameSlice';
 import { addChatMsg, setChatHistory, setLoading, setTyping, setUser, stopLoading } from '@/redux/miscSlice';
-import { deleteAuth, getAuth, hasAuth, setAuth } from './localStore';
+import { deleteAuth, getAuth, setAuth } from './localStore';
 import { usePathname } from 'next/navigation';
 import { useWinnersModal } from '@/contexts';
 
@@ -178,7 +178,7 @@ export function useApi() {
     }, []);
 
     const validate = useCallback(async () => {
-        if (!hasAuth()) return;
+        // if (!hasAuth()) return;
 
         await exec({
             method: 'get',

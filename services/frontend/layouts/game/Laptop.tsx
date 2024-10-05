@@ -22,18 +22,18 @@ export default function Game() {
     const { user, href, device } = useSelector(state => state.misc);
     const ws = useWs();
 
-    return <Flex pos='relative' w='60vw' h={device !== 'phone' ? '50vh' : '60svh'} border='36px solid black' bg='#063605' rounded='full' justify='center' align='center'>
+    return <Flex pos='relative' w={device !== 'phone' ? '60vw' : '50vw'} h={device !== 'phone' ? '50vh' : '70svh'} border='36px solid black' bg='#063605' rounded='full' justify='center' align='center'>
         <Box w='95%' h='90%' pos='absolute' top={0} left={0} transform='translate(2.5%, 5%)' rounded='full' border='2px solid black' />
 
-        {device !== 'phone' && <VStack pos='fixed' bottom={0} right={0} spacing={0} align='end' fontSize='12px' p='10px' opacity={.5} pointerEvents='none'>
-            <Text>ws status: <Text as='span' id='wsstatus' color='cyan' fontWeight={600}>unknown</Text></Text>
-            <Text>user_id: {user?.uuid}</Text>
-        </VStack>}
+        {/*{device !== 'phone' && <VStack pos='fixed' bottom={0} right={0} spacing={0} align='end' fontSize='12px' p='10px' opacity={.5} pointerEvents='none'>*/}
+        {/*    <Text>ws status: <Text as='span' id='wsstatus' color='cyan' fontWeight={600}>unknown</Text></Text>*/}
+        {/*    <Text>user_id: {user?.uuid}</Text>*/}
+        {/*</VStack>}*/}
 
         {game.seats.includes(user?.uuid) && <Box pos='fixed' bottom={0} left={0} zIndex={1}><ChatBlock /></Box>}
         {game.players.length >= 2 && <Box pos='fixed' bottom='30px' right='30px'><Controls /></Box>}
 
-        {Array.from({ length: game.seats.length }, (_: any, i: number) => {
+        {Array.from({ length: game.seats.length - 1 }, (_: any, i: number) => {
             const seatTaken = !!game.seats[i];
             const seatOpacity = game.status === SessionStatus.LOBBY || game.current_player === i ? 1 : .5;
             const player: IPlayer | undefined = game.players.find((p: IPlayer) => p.id === game.seats[i]);

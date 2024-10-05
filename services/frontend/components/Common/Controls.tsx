@@ -5,6 +5,7 @@ import { IPlayer } from '@/utils/types';
 import { useWs } from '@/contexts/SocketContext';
 import { SessionStatus } from '@/utils/enums';
 import { useState } from 'react';
+import { colors } from '@/utils/misc';
 
 function MySlider({ data }: any) {
     const ws = useWs();
@@ -13,11 +14,11 @@ function MySlider({ data }: any) {
     const [value, setValue] = useState(Math.round((data.slider[0] + data.slider[1]) / 2));
 
     return <VStack>
-        <Slider aria-label='slider' min={data.slider[0]} max={data.slider[1]} step={200} value={value} onChange={val => setValue(val)}>
-            <SliderTrack>
-                <SliderFilledTrack />
+        <Slider aria-label='slider' w='150px' min={data.slider[0]} max={data.slider[1]} step={200} value={value} onChange={val => setValue(val)}>
+            <SliderTrack h='10px' rounded='200px' bg='purple.600'>
+                <SliderFilledTrack bg='purple.600' />
             </SliderTrack>
-            <SliderThumb />
+            <SliderThumb bg='green.500' />
         </Slider>
 
         <Text>{value}</Text>
@@ -55,6 +56,8 @@ export function Controls() {
     ];
 
     return <HStack h='70px' spacing='8px'>
+        {/*<MySlider data={{ label: `Рейз`, color: 'teal', payload: { type: 'raise' }, slider: [big_blind, players.find((p: IPlayer) => p.id === user?.uuid)?.balance ?? big_blind] }} />*/}
+
         {(status === SessionStatus.LOBBY ? (seats.filter(s => s).length >= 2 && owner === user?.uuid) : true) &&
             buttons[status]
                 .filter(b => status === SessionStatus.GAME ? allowed_actions.includes(b.payload.type) : true)
