@@ -53,8 +53,6 @@ export function Controls() {
     ];
 
     return <HStack h='40px' spacing='8px'>
-        <MySlider data={{ label: `Рейз`, color: 'teal', payload: { type: 'raise' }, slider: [big_blind, players.find((p: IPlayer) => p.id === user?.uuid)?.balance ?? big_blind] }} />
-
         {(status === SessionStatus.LOBBY ? (seats.filter(s => s).length >= 2 && owner === user?.uuid) : true) &&
             buttons[status]
                 .filter(b => status === SessionStatus.GAME ? allowed_actions.includes(b.payload.type) : true)
