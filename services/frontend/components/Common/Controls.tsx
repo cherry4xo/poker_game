@@ -21,15 +21,12 @@ function MySlider({ data }: any) {
             <SliderThumb bg='green.500' />
         </Slider>
 
-        <Text>{value}</Text>
-
         <Button
-            variant='outline'
-            colorScheme={data.color}
+            h='100%' p='6px 18px' fontSize='15px' rounded='200px' variant='outline' colorScheme={data.color}
             isDisabled={status === SessionStatus.GAME ? (seats[current_player ?? 0] !== user?.uuid) : false}
             onClick={() => ws.current.send(JSON.stringify({ ...data.payload, value }))}
         >
-            {data.label}
+            {data.label} <Text as='span' color='whiteAlpha.800' pl='4px'>({value})</Text>
         </Button>
     </VStack>;
 }
@@ -55,8 +52,8 @@ export function Controls() {
         []
     ];
 
-    return <HStack h='70px' spacing='8px'>
-        {/*<MySlider data={{ label: `Рейз`, color: 'teal', payload: { type: 'raise' }, slider: [big_blind, players.find((p: IPlayer) => p.id === user?.uuid)?.balance ?? big_blind] }} />*/}
+    return <HStack h='40px' spacing='8px'>
+        <MySlider data={{ label: `Рейз`, color: 'teal', payload: { type: 'raise' }, slider: [big_blind, players.find((p: IPlayer) => p.id === user?.uuid)?.balance ?? big_blind] }} />
 
         {(status === SessionStatus.LOBBY ? (seats.filter(s => s).length >= 2 && owner === user?.uuid) : true) &&
             buttons[status]
@@ -65,7 +62,7 @@ export function Controls() {
                     {!!b.slider
                         ? <MySlider data={b} />
                         : <Button
-                            h='100%' p='12px 24px' fontSize='18px' rounded='10px' variant='outline' colorScheme={b.color}
+                            h='100%' p='6px 18px' fontSize='15px' rounded='200px' variant='outline' colorScheme={b.color}
                             isDisabled={status === SessionStatus.GAME ? (seats[current_player ?? 0] !== user?.uuid) : false}
                             onClick={() => ws.current.send(JSON.stringify(b.payload))}
                         >
