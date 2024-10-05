@@ -22,7 +22,7 @@ export default function Game() {
     const { user, href, device } = useSelector(state => state.misc);
     const ws = useWs();
 
-    return <Flex pos='relative' w={device !== 'phone' ? '60vw' : '50vw'} h={device !== 'phone' ? '50vh' : '70svh'} border='36px solid black' bg='#063605' rounded='full' justify='center' align='center'>
+    return <Flex pos='relative' w='60vw' h={device !== 'phone' ? '50vh' : '60svh'} border='36px solid black' bg='#063605' rounded='full' justify='center' align='center'>
         <Box w='95%' h='90%' pos='absolute' top={0} left={0} transform='translate(2.5%, 5%)' rounded='full' border='2px solid black' />
 
         {/*{device !== 'phone' && <VStack pos='fixed' bottom={0} right={0} spacing={0} align='end' fontSize='12px' p='10px' opacity={.5} pointerEvents='none'>*/}
@@ -31,7 +31,7 @@ export default function Game() {
         {/*</VStack>}*/}
 
         {game.seats.includes(user?.uuid) && <Box pos='fixed' bottom={0} left={0} zIndex={1}><ChatBlock /></Box>}
-        {game.players.length >= 2 && <Box pos='fixed' bottom='30px' right='30px'><Controls /></Box>}
+        {game.players.length >= 2 && <Box pos='fixed' bottom='20px' right='30px'><Controls /></Box>}
 
         {Array.from({ length: game.seats.length - 1 }, (_: any, i: number) => {
             const seatTaken = !!game.seats[i];
@@ -71,7 +71,7 @@ export default function Game() {
                     opacity={seatOpacity}
                     userSelect='none'
                     p={device !== 'phone' ? '24px 40px' : '12px 20px'}
-                    fontSize={device !== 'phone' ? '18px' : '15px'}
+                    fontSize={device !== 'phone' ? '18px' : '16px'}
                     fontWeight={600}
                     spacing='14px'
                     rounded='15px'
@@ -100,7 +100,7 @@ export default function Game() {
                             {player.status === PlayerStatus.PASS && <Flex {...PlayerLabelStyles} bg='red' color='white'>passed</Flex>}
                         </HStack>}
 
-                        <HStack w='90px' h='60px' spacing='4px' pos='absolute' top='-70px'>
+                        <HStack w={device !== 'phone' ? '80px' : '50px'} h={device !== 'phone' ? '100px' : '70px'} spacing='4px' pos='absolute' top={device !== 'phone' ? '-90px' : '-66px'} left='20%'>
                             {player.hand.cards
                                 .map((card: any) => {
                                     if (player.id === user?.uuid || game.stage === SessionStage.SHOWDOWN) {
@@ -109,7 +109,7 @@ export default function Game() {
                                         return undefined;
                                     }
                                 })
-                                .map((card: any, i: number) => <Card key={i} i={i} data={card} />)}
+                                .map((card: any, i: number) => <Card key={i} i={i} data={card} props={{ position: 'absolute', transform: `translate(${20*i}px, ${3*i}px) rotate(${-10 + 15*i}deg)` }} />)}
                         </HStack>
                     </> : <Text>занять</Text>}
                 </HStack>
@@ -117,7 +117,7 @@ export default function Game() {
         })}
 
         <VStack w='100%' spacing='12px'>
-            <HStack spacing='10px' h='100px'>
+            <HStack spacing='10px' h={device !== 'phone' ? '100px' : '60px'}>
                 {/* #kostyl */}
                 {game.board.cards
                     .map((card: any, i: number) => {

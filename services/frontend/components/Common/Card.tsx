@@ -3,7 +3,7 @@ import { ease } from '@/utils/misc';
 // @ts-ignore
 import * as deck from '@letele/playing-cards';
 
-export function Card({ data, i }: { data: { rank: string, suit: string } | undefined, i: number }) {
+export function Card({ data, i, props }: { data: { rank: string, suit: string } | undefined, i: number, props?: any }) {
     let TheCard = deck.B1;
 
     if (!!data) {
@@ -12,7 +12,7 @@ export function Card({ data, i }: { data: { rank: string, suit: string } | undef
         TheCard = deck[`${suit}${rank}`] ?? deck.B2;
     }
 
-    const fill = { width: '100%', height: '100%' };
+    const fill = { width: '100%', height: '100%', ...props };
 
     return <motion.div
         key={TheCard}
