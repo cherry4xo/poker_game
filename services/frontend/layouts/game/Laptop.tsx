@@ -1,4 +1,4 @@
-import { Box, Flex, FlexProps, HStack, Icon, Input, StackProps, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, Flex, FlexProps, HStack, Icon, Input, StackProps, Text, VStack } from '@chakra-ui/react';
 import { colors, positions } from '@/utils/misc';
 import { Card, ChatBlock, Controls, Sum } from '@/components/Common';
 import { useSelector } from '@/redux/hooks';
@@ -7,6 +7,7 @@ import { PlayerStatus, SessionStage, SessionStatus } from '@/utils/enums';
 import { FaUser } from 'react-icons/fa';
 import { Fragment } from 'react';
 import { useWs } from '@/contexts';
+import { TbDeviceGamepad } from 'react-icons/tb';
 
 const PlayerLabelStyles: StackProps = {
     w: 'max-content',
@@ -22,8 +23,9 @@ export default function Game() {
     const { user, href, device } = useSelector(state => state.misc);
     const ws = useWs();
 
-    return <Flex pos='relative' w='60vw' h={device !== 'phone' ? '50vh' : '60svh'} border='36px solid black' bg='#063605' rounded='full' justify='center' align='center'>
-        <Box w='95%' h='90%' pos='absolute' top={0} left={0} transform='translate(2.5%, 5%)' rounded='full' border='2px solid black' />
+    return <Flex pos='relative' w='70vw' h={device !== 'phone' ? '80svh' : '80svh'} border='36px solid #4c5ba1' bg='#6fb188' boxShadow='0 0 10px 10px rgba(0,0,0,1) inset' rounded='full' justify='center' align='center'>
+        <Box w='95%' h='90%' pos='absolute' top={0} left={0} transform='translate(2.5%, 5%)' rounded='full' border='6px solid white' boxShadow='0 0 10px 10px rgba(0,0,0,1) inset' outline='20px solid #889fef' />
+        {/*<Box w='107%' h='115%' pos='absolute' zIndex={5} top={0} left={0} transform='translate(-3%, -7%)' boxShadow='0 0 10px 10px rgba(0,0,0,.5)' rounded='full' border='36px solid #4c5ba1' />*/}
 
         {/*{device !== 'phone' && <VStack pos='fixed' bottom={0} right={0} spacing={0} align='end' fontSize='12px' p='10px' opacity={.5} pointerEvents='none'>*/}
         {/*    <Text>ws status: <Text as='span' id='wsstatus' color='cyan' fontWeight={600}>unknown</Text></Text>*/}
@@ -64,55 +66,54 @@ export default function Game() {
                 {player && game.current_player === i &&
                     <Box pos='absolute' {...positions.dots[i]} bg='white' w='20px' h='20px' rounded='200px' pointerEvents='none' />}
 
-                <HStack
+                {player && <HStack
                     {...positions.players[i]}
                     {...SeatStyles}
-                    bg={seatTaken ? (colors[i] + '33') : 'gray.700'}
+                    bg='gray.700'
+                    color={seatTaken ? colors[i] : 'gray.400'}
                     opacity={seatOpacity}
                     userSelect='none'
-                    p={device !== 'phone' ? '24px 40px' : '12px 20px'}
-                    fontSize={device !== 'phone' ? '18px' : '16px'}
+                    p={device !== 'phone' ? '12px 40px' : '12px 20px'}
+                    fontSize={device !== 'phone' ? '20px' : '16px'}
                     fontWeight={600}
                     spacing='14px'
-                    rounded='15px'
+                    rounded='200px'
                     pos='absolute'
                     justify='center'
                     align='center'
                     transition='0.2s'
                 >
-                    {player ? <>
-                        {game.dealer === i && <Text pos='absolute' bottom='14px' right='11px'>d</Text>}
+                    {game.dealer === i && <Text pos='absolute' bottom='14px' right='11px'>d</Text>}
 
-                        <Box pos='absolute' bottom={-8} right={0}>
-                            <Sum color='orange'>{player.balance}</Sum>
-                        </Box>
+                    {game.status === SessionStatus.LOBBY && <Box pos='absolute' bottom={-8} left='20%'>
+                        <Sum color='orange'>{player.balance}</Sum>
+                    </Box>}
 
-                        <Text w='max-content' color={colors[i]}>
-                            {player.name}
-                            <Text as='span' color='gray' opacity='.5'>{player.id === user?.uuid && ' (вы)'}</Text>
-                        </Text>
+                    <Text w='max-content' color={colors[i]}>
+                        {player.name}
+                        <Text as='span' color='gray' opacity='.5'>{player.id === user?.uuid && ' (вы)'}</Text>
+                    </Text>
 
-                        <Box w='100%' h='100%' pos='absolute' top={0} left={0} rounded='10px' overflow='hidden'>
-                            <Icon as={FaUser} w={device !== 'phone' ? '40px' : '30px'} h={device !== 'phone' ? '40px' : '30px'} color={colors[i]} pos='absolute' opacity={.25} bottom={-1} right={-1} />
-                        </Box>
+                    <Box w='100%' h='100%' pos='absolute' top={0} left={0} rounded='200px' overflow='hidden'>
+                        <Icon as={FaUser} w={device !== 'phone' ? '40px' : '30px'} h={device !== 'phone' ? '40px' : '30px'} color={colors[i]} pos='absolute' opacity={.25} bottom={-1} right={-1} />
+                    </Box>
 
-                        {game.status !== SessionStatus.LOBBY && <HStack h='30px' spacing='4px' pos='absolute' bottom='-60px' left='-0px'>
-                            {player.status === PlayerStatus.PASS && <Flex {...PlayerLabelStyles} bg='red' color='white'>passed</Flex>}
-                        </HStack>}
+                    {game.status !== SessionStatus.LOBBY && <HStack h='30px' spacing='4px' pos='absolute' bottom='-60px' left='-0px'>
+                        {player.status === PlayerStatus.PASS && <Flex {...PlayerLabelStyles} bg='red' color='white'>passed</Flex>}
+                    </HStack>}
 
-                        <HStack w={device !== 'phone' ? '80px' : '50px'} h={device !== 'phone' ? '100px' : '70px'} spacing='4px' pos='absolute' top={device !== 'phone' ? '-90px' : '-66px'} left='20%'>
-                            {player.hand.cards
-                                .map((card: any) => {
-                                    if (player.id === user?.uuid || game.stage === SessionStage.SHOWDOWN) {
-                                        return card;
-                                    } else {
-                                        return undefined;
-                                    }
-                                })
-                                .map((card: any, i: number) => <Card key={i} i={i} data={card} props={{ position: 'absolute', transform: `translate(${20*i}px, ${3*i}px) rotate(${-10 + 15*i}deg)` }} />)}
-                        </HStack>
-                    </> : <Text>занять</Text>}
-                </HStack>
+                    <HStack w={device !== 'phone' ? '80px' : '50px'} h={device !== 'phone' ? '100px' : '70px'} spacing='4px' pos='absolute' top={device !== 'phone' ? '-90px' : '-66px'} left='20%'>
+                        {player.hand.cards
+                            .map((card: any) => {
+                                if (player.id === user?.uuid || game.stage === SessionStage.SHOWDOWN) {
+                                    return card;
+                                } else {
+                                    return undefined;
+                                }
+                            })
+                            .map((card: any, i: number) => <Card key={i} i={i} data={card} props={{ position: 'absolute', transform: `translate(${20 * i}px, ${3 * i}px) rotate(${-10 + 15 * i}deg)` }} />)}
+                    </HStack>
+                </HStack>}
             </Fragment>;
         })}
 
@@ -138,6 +139,7 @@ export default function Game() {
 
             {game.status === SessionStatus.LOBBY
                 ? <>
+                    <Button px='40px' leftIcon={<TbDeviceGamepad />} isDisabled={game.seats.includes(user?.uuid)} colorScheme='purple' onClick={() => ws.current.send(JSON.stringify({ type: 'take_seat', seat_num: game.seats.indexOf(null) }))}>{!game.seats.includes(user?.uuid) ? 'Занять место' : `Занято место №${game.seats.indexOf(user?.uuid) + 1}`}</Button>
                     <Text>Ожидаем игроков...</Text>
                     <Input w='50%' opacity={.75} onFocus={(e: any) => e.target.select()} readOnly value={`${href}/join/${game.id}`} />
                     <Text fontSize='13px' opacity={.75}>Скопируйте и отправьте друзьям ссылку на игру!</Text>

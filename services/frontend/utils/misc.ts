@@ -6,10 +6,10 @@ export const randomorg = (min: number, max: number) => Math.floor(Math.random() 
 
 export const positions: any = {
     players: [
-        { left: '-20%', top: '-20%' }, // tl
-        { left: '100%', top: '-20%' }, // tr
-        { left: '-20%', top: '100%' }, // bl
-        { left: '100%', top: '100%' } // br
+        { left: '-10%', top: '10%' }, // tl
+        { right: '-10%', top: '10%' }, // tr
+        { left: '-10%', bottom: '10%' }, // bl
+        { right: '-10%', bottom: '10%' } // br
     ],
     bets: [
         { left: '10%', top: '20%' },
